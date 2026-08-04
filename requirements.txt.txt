@@ -1,0 +1,26 @@
+# Data Ingestion
+requests==2.32.3
+beautifulsoup4==4.12.3
+scrapy==2.11.2
+
+# Vector DB & Embeddings
+chromadb==0.5.3
+sentence-transformers==3.0.1
+
+# Orchestration & LLM Core
+langchain==0.2.11
+langchain-core==0.2.24
+langchain-community==0.2.10
+langchain-google-genai==1.0.8
+
+# Evaluation Metrics
+ragas==0.1.9
+evaluate==0.4.2
+rouge-score==0.1.2
+bert-score==0.3.13
+torch==2.3.1
+
+# API Layer for OpenWebUI Integration
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2

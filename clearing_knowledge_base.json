@@ -1,0 +1,245 @@
+[
+    {
+        "university_name": "University of Manchester",
+        "course_code": "CS101",
+        "ukprn": "10007798",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 88.5,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments.",
+            "entry_requirements": "Entry RequirementsTypical A-level offer of AAA including Mathematics and further Mathematics or equivalent qualifications; international applicants should check country-specific equivalency.",
+            "student_support": "Student SupportPersonal tutoring, academic advising, and careers support are available throughout the degree.",
+            "career_outcomes": "Career OutcomesStrong graduate employability with placement and internship pathways, supported by the university careers service."
+        },
+        "metadata_reference": {
+            "source_url": "https://discoveruni.gov.uk/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "Lancaster University",
+        "course_code": "CS202",
+        "ukprn": "10007768",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 82.0,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments.",
+            "entry_requirements": "Entry RequirementsTypical A-level offer of AAB including Mathematics; contextual offers may be available for eligible applicants.",
+            "student_support": "Student SupportAcademic tutors, student wellbeing services, and careers guidance are available throughout the course.",
+            "career_outcomes": "Career OutcomesGraduates are well prepared for software engineering and data roles with strong sector links."
+        },
+        "metadata_reference": {
+            "source_url": "https://www.lancaster.ac.uk/study/undergraduate/courses/computer-science-bsc-g400/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "University of Leeds",
+        "course_code": "CS303",
+        "ukprn": "10007775",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 82.0,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments.",
+            "entry_requirements": "Entry RequirementsTypical A-level offer of AAB including Mathematics and Physics or equivalent qualifications.",
+            "student_support": "Student SupportAcademic and personal support is available through the university's student services and the computing school.",
+            "career_outcomes": "Career OutcomesThe course supports strong placement and graduate employment outcomes with local and national employers."
+        },
+        "metadata_reference": {
+            "source_url": "https://courses.leeds.ac.uk/f900/computer-science-bsc",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "University of Birmingham",
+        "course_code": "CS404",
+        "ukprn": "10007140",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 82.0,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments."
+        },
+        "metadata_reference": {
+            "source_url": "https://discoveruni.gov.uk/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "University of Nottingham",
+        "course_code": "CS505",
+        "ukprn": "10007154",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 82.0,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments."
+        },
+        "metadata_reference": {
+            "source_url": "https://discoveruni.gov.uk/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "University of Sheffield",
+        "course_code": "CS606",
+        "ukprn": "10007779",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 82.0,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments."
+        },
+        "metadata_reference": {
+            "source_url": "https://discoveruni.gov.uk/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "Newcastle University",
+        "course_code": "CS707",
+        "ukprn": "10007799",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 82.0,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments."
+        },
+        "metadata_reference": {
+            "source_url": "https://discoveruni.gov.uk/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "University of Liverpool",
+        "course_code": "CS700",
+        "ukprn": "10003979",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 87.0,
+            "leo_median_salary_3_years": 32500
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 Modules include Programming Fundamentals, Discrete Mathematics, and Systems Architecture.",
+            "curriculum_year_2": "Year 2 Modules include Data Structures and Algorithms, Software Engineering, and Database Systems.",
+            "curriculum_year_3": "Year 3 Modules include Artificial Intelligence, Distributed Systems, and a Final Year Project.",
+            "industrial_placements": "Industrial PlacementsAn optional placement year is available between Years 2 and 3.",
+            "infrastructure_and_facilities": "Lab InfrastructureStudents use dedicated computing labs and specialist software engineering facilities.",
+            "entry_requirements": "Entry RequirementsTypical A-level offer of AAA including Mathematics or equivalent qualifications.",
+            "student_support": "Student SupportAcademic advisors, wellbeing services, and careers guidance are available throughout the programme.",
+            "career_outcomes": "Career OutcomesGraduates progress into software engineering, data, and technology consulting roles."
+        },
+        "metadata_reference": {
+            "source_url": "https://www.liverpool.ac.uk/courses/computer-science-bsc-hons/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "Liverpool John Moores University",
+        "course_code": "CS808",
+        "ukprn": "10003957",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 82.0,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments."
+        },
+        "metadata_reference": {
+            "source_url": "https://discoveruni.gov.uk/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "Manchester Metropolitan University",
+        "course_code": "CS909",
+        "ukprn": "10004113",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 88.5,
+            "leo_median_salary_3_years": 31000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments."
+        },
+        "metadata_reference": {
+            "source_url": "https://discoveruni.gov.uk/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    },
+    {
+        "university_name": "Queen Mary University London",
+        "course_code": "CS010",
+        "ukprn": "10007777",
+        "metrics": {
+            "annual_tuition_fee_uk": 9250,
+            "graduate_in_work_15_months_pct": 82.0,
+            "leo_median_salary_3_years": 34000
+        },
+        "knowledge_layers": {
+            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
+            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
+            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
+            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
+            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments."
+        },
+        "metadata_reference": {
+            "source_url": "https://discoveruni.gov.uk/",
+            "verification_layer": "HESA / Discover Uni / Institutional Web Scrape"
+        }
+    }
+]

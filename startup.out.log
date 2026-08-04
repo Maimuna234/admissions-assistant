@@ -1,0 +1,201 @@
+INFO:     127.0.0.1:61246 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61246 - "GET /api/summary HTTP/1.1" 200 OK
+🔍 Discovering active Gemini models for your API key...
+⭐ Top candidate model: [gemini-2.0-flash]
+🔄 Loading vector database index...
+INFO:     127.0.0.1:64744 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64745 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64745 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64744 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64745 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64745 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64746 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64745 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64745 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64745 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64744 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64744 - "GET /api/summary HTTP/1.1" 200 OK
+
+--- 📥 Incoming Query: "Compare the target programme "Computer Science BSc" against the selected competitor university "University of Leeds" using the selected priorities (fees, ranking) and return a short decision summary.
+Provided tutor prompt: Please prioritize fees and ranking and keep response under 80 words.
+Additional tutor instruction: Please prioritize fees and ranking and keep response under 80 words.
+Target programme: Computer Science BSc
+Competitor university: University of Leeds
+Student priorities: fees, ranking" ---
+🛤️ Intent Router: Navigating query to [SQL] engine.
+⚠️ Structured SQL lookup returned no targeted rows. Falling back to hybrid retrieval.
+🧾 Structured admissions query detected. Using the structured summary formatter.
+INFO:     127.0.0.1:61250 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64751 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64751 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64759 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64759 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64763 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64763 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64763 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64763 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64763 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64763 - "GET /api/summary HTTP/1.1" 200 OK
+
+--- 📥 Incoming Query: "Compare the target programme "Computer Science BSc" against the selected competitor university "University of Leeds" using the selected priorities (fees, ranking) and return a short decision summary.
+Provided tutor prompt: Compare the target programme "Computer Science BSc" against the selected competitor university "University of Leeds" using the selected priorities (fees, ranking) and return a short decision summary.
+Additional tutor instruction: Compare the target programme against the competitor university using the selected priorities and return a short decision summary.
+Additional tutor instruction: Compare the target programme against the competitor university using the selected priorities and return a short decision summary.
+Target programme: Computer Science BSc
+Competitor university: University of Leeds
+Student priorities: fees, ranking" ---
+🛤️ Intent Router: Navigating query to [SQL] engine.
+⚠️ Structured SQL lookup returned no targeted rows. Falling back to hybrid retrieval.
+🧾 Structured admissions query detected. Using the structured summary formatter.
+INFO:     127.0.0.1:64763 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64762 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64762 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64769 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64769 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64748 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64771 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64771 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64773 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64773 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64775 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64775 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64777 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64777 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64778 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64778 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64770 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64770 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64770 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64779 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64770 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64779 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64779 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64770 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64780 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64780 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64784 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64784 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64788 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64788 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64792 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64792 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64794 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64794 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64795 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64795 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64796 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64796 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64796 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64795 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64795 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64795 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64797 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64797 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64800 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64800 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64801 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64801 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64804 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64804 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64805 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64805 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64806 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64806 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64806 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64807 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64808 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64807 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64808 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64808 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64811 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64811 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64813 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64813 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64820 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64820 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64822 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64821 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64820 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64823 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64822 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64820 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64823 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64823 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54597 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54598 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54597 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54599 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54599 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54598 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54599 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54597 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54599 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54599 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54608 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54609 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54609 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54609 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54608 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54610 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54609 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54610 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54610 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54610 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54611 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54628 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54611 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54629 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54628 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54629 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54611 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54629 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54629 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54611 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54641 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54630 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54630 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54641 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54630 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54642 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54630 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54642 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54642 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54642 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53125 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53125 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53124 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53142 - "POST /api/chat HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53146 - "POST /api/chat HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53147 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53147 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53148 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53147 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53148 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53147 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53149 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53147 - "GET /v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53147 - "GET /api/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53147 - "GET /api/summary HTTP/1.1" 200 OK
+
+--- 📥 Incoming Query: "Compare the target programme "N/A" against the selected competitor university "University of Leeds" using the selected priorities (Tuition fee, Graduate salary, Duration) and return a short decision summary.
+Provided tutor prompt: Compare Computer Science BSc from University of Liverpool with University of Leeds using tuition fee, salary, and duration in under 80 words.
+Competitor university: University of Leeds
+Student priorities: Tuition fee, Graduate salary, Duration" ---
+🛤️ Intent Router: Navigating query to [SQL] engine.
+⚠️ Low-confidence retrieval detected. Returning abstention response.
+🧾 Structured admissions query detected. Using the structured summary formatter.
+INFO:     127.0.0.1:53154 - "POST /api/chat HTTP/1.1" 200 OK

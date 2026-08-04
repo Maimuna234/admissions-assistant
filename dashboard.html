@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Evaluation Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f8fafc; color: #111827; }
+    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .metric { padding: 14px; background: linear-gradient(135deg, #f8fafc, #eef2ff); border-radius: 10px; border: 1px solid #e5e7eb; }
+    .metric strong { display: block; margin-bottom: 6px; font-size: 0.95rem; color: #374151; }
+    .metric .value { font-size: 1.2rem; font-weight: 700; color: #111827; }
+    img { width: 100%; max-width: 900px; border-radius: 8px; border: 1px solid #e5e7eb; }
+    h1, h2 { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>RAG Evaluation Dashboard</h1>
+    <p>Summary of the latest evaluation run.</p>
+  </div>
+
+  <div class="card">
+    <div class="grid" id="metrics"></div>
+  </div>
+
+  <div class="card">
+    <h2>Score Chart</h2>
+    <img id="scoreChart" src="evaluation_summary.png" alt="Evaluation summary chart" />
+  </div>
+
+  <script>
+    let lastText = '';
+
+    async function loadSummary() {
+      const response = await fetch('evaluation_summary.csv');
+      const text = await response.text();
+      if (text === lastText) return;
+      lastText = text;
+
+      const rows = text.trim().split('\n');
+      const headers = rows[0].split(',');
+      const values = rows[1].split(',');
+      const data = Object.fromEntries(headers.map((h, i) => [h, values[i]]));
+
+      const metricMap = [
+        ['Total Questions', data.total_questions],
+        ['Avg Confidence', data.avg_confidence_score],
+        ['Abstain Count', data.abstain_count],
+        ['Avg Faithfulness', data.avg_faithfulness],
+        ['Avg Relevancy', data.avg_answer_relevancy],
+        ['Avg Precision', data.avg_context_precision],
+        ['Avg Recall', data.avg_context_recall],
+      ];
+
+      const container = document.getElementById('metrics');
+      container.innerHTML = metricMap.map(([label, value]) => `
+        <div class="metric"><strong>${label}</strong><div class="value">${value}</div></div>
+      `).join('');
+
+      const chart = document.getElementById('scoreChart');
+      if (chart) {
+        chart.src = `evaluation_summary.png?t=${Date.now()}`;
+      }
+    }
+
+    loadSummary();
+    setInterval(loadSummary, 3000);
+  </script>
+</body>
+</html>
