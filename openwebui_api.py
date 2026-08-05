@@ -378,11 +378,12 @@ def _render_ui_html() -> str:
                     <div class="control-group">
                         <label class="label">Student Priorities:</label>
                         <div class="checkboxes">
-                            <label><input id="priorityGradeFlexibility" type="checkbox" checked /> Grade Flexibility</label>
-                            <label><input id="priorityCurriculumAI" type="checkbox" checked /> Curriculum &amp; AI</label>
-                            <label><input id="priorityEmployabilitySalary" type="checkbox" checked /> Employability &amp; Salary</label>
-                            <label><input id="priorityCostScholarships" type="checkbox" /> Cost &amp; Scholarships</label>
-                            <label><input id="priorityFacilitiesCommunity" type="checkbox" /> Facilities &amp; Community</label>
+                            <label><input id="priorityEntryRequirements" type="checkbox" checked /> Entry Requirements</label>
+                            <label><input id="priorityCurriculumAccreditation" type="checkbox" checked /> Curriculum &amp; Accreditation</label>
+                            <label><input id="priorityGraduateOutcomes" type="checkbox" checked /> Graduate Outcomes &amp; Salary</label>
+                            <label><input id="priorityFeesAndCost" type="checkbox" /> Fees &amp; Cost</label>
+                            <label><input id="priorityTeachingQuality" type="checkbox" /> Teaching Quality &amp; NSS</label>
+                            <label><input id="priorityRankings" type="checkbox" /> University Rankings</label>
                         </div>
                     </div>
 
@@ -445,11 +446,12 @@ def _render_ui_html() -> str:
         function loadDefaults() {{
             document.getElementById('targetProgramme').value = 'Computer Science BSc - University of Liverpool';
             document.getElementById('competitorUniversity').value = 'University of Leeds';
-            document.getElementById('priorityGradeFlexibility').checked = true;
-            document.getElementById('priorityCurriculumAI').checked = true;
-            document.getElementById('priorityEmployabilitySalary').checked = true;
-            document.getElementById('priorityCostScholarships').checked = false;
-            document.getElementById('priorityFacilitiesCommunity').checked = false;
+            document.getElementById('priorityEntryRequirements').checked = true;
+            document.getElementById('priorityCurriculumAccreditation').checked = true;
+            document.getElementById('priorityGraduateOutcomes').checked = true;
+            document.getElementById('priorityFeesAndCost').checked = false;
+            document.getElementById('priorityTeachingQuality').checked = false;
+            document.getElementById('priorityRankings').checked = false;
             document.getElementById('question').value = 'Compare the target programme against the selected competitor university using the selected priorities and return a short decision summary.';
         }}
 
@@ -528,11 +530,12 @@ def _render_ui_html() -> str:
             const baselineUniversity = 'University of Liverpool';
             const competitorUniversity = document.getElementById('competitorUniversity').value.trim();
             const priorities = [
-                document.getElementById('priorityGradeFlexibility').checked ? 'Grade Flexibility (UCAS points, A-Level Maths requirements, contextual policies)' : null,
-                document.getElementById('priorityCurriculumAI').checked ? 'Curriculum & AI (module lists, assessment split, BCS accreditation status)' : null,
-                document.getElementById('priorityEmployabilitySalary').checked ? 'Employability & Salary (LEO graduate starting salary, % in work/study, placement availability)' : null,
-                document.getElementById('priorityCostScholarships').checked ? 'Cost & Scholarships (accommodation averages, fee structure, bursaries)' : null,
-                document.getElementById('priorityFacilitiesCommunity').checked ? 'Facilities & Community (lab infrastructure, NSS satisfaction, hackathons/societies)' : null,
+                document.getElementById('priorityEntryRequirements').checked ? 'Entry Requirements (A-level requirement, entry tariff UCAS points, % entrants via A-level, foundation year availability)' : null,
+                document.getElementById('priorityCurriculumAccreditation').checked ? 'Curriculum & Accreditation (BCS accreditation, final year project credits, placement year, year abroad)' : null,
+                document.getElementById('priorityGraduateOutcomes').checked ? 'Graduate Outcomes & Salary (median salary LEO 3-year, LEO 5-year, graduate outcomes salary, employment rate 15 months, % professional/managerial jobs)' : null,
+                document.getElementById('priorityFeesAndCost').checked ? 'Fees & Cost (UK tuition fee, international tuition fee)' : null,
+                document.getElementById('priorityTeachingQuality').checked ? 'Teaching Quality & NSS (NSS teaching satisfaction, NSS mental wellbeing, NSS facilities, TEF overall rating, TEF student experience)' : null,
+                document.getElementById('priorityRankings').checked ? 'University Rankings (Guardian rank, CUG rank, QS world rank)' : null,
             ].filter(Boolean);
             const additionalInstruction = document.getElementById('question').value.trim();
 
@@ -818,12 +821,31 @@ def api_chat(
     if not question:
         raise HTTPException(status_code=400, detail="Missing question")
 
+    # Map priority labels to the DB column groups they cover, so the SQL router fires correctly.
+    _PRIORITY_COLUMN_HINTS = {
+        "Entry Requirements": "entry tariff alevel_requirement UCAS points a-level requirement foundation year",
+        "Curriculum & Accreditation": "bcs accredited final year project credits placement year year abroad",
+        "Graduate Outcomes & Salary": "median salary employment rate professional managerial LEO 3-year 5-year",
+        "Fees & Cost": "tuition fee uk international tuition fee",
+        "Teaching Quality & NSS": "nss teaching satisfaction mental wellbeing facilities tef rating",
+        "University Rankings": "guardian rank cug rank qs rank league table ranking",
+    }
+
+    priority_column_terms = []
+    for p in priorities:
+        for label, terms in _PRIORITY_COLUMN_HINTS.items():
+            if label.lower() in str(p).lower():
+                priority_column_terms.append(terms)
+                break
+
     focused_question = question
     if target_programme or competitor_university or priorities:
         priority_text = ", ".join(str(item) for item in priorities) if priorities else "none"
         parts = [
             f'Compare the target programme "{target_programme}" from "{baseline_university}" against the selected competitor university "{competitor_university or "N/A"}" using the selected priorities ({priority_text}) and return a short decision summary.'
         ]
+        if priority_column_terms:
+            parts.append(f"Focus on: {' | '.join(priority_column_terms)}")
         if question:
             parts.append(f"Provided tutor prompt: {question}")
         if additional_instruction:
