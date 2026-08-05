@@ -352,15 +352,19 @@ class QueryRouter:
                 cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='course_facts'")
                 has_table = cur.fetchone() is not None
                 if has_table:
-                    try:
-                        from seed_db import ensure_course_facts_schema
-                        ensure_course_facts_schema(self.db_path)
-                    except Exception:
-                        pass
-                    cur.execute("SELECT COUNT(*) FROM course_facts")
-                    if cur.fetchone()[0] > 0:
-                        conn.close()
-                        return
+                    existing_cols = {col[1] for col in cur.execute("PRAGMA table_info(course_facts)").fetchall()}
+                    # Re-import if the working DB is missing new schema columns.
+                    schema_stale = not existing_cols.issuperset({"tuition_fee_uk", "median_salary_leo3", "alevel_requirement"})
+                    if not schema_stale:
+                        try:
+                            from seed_db import ensure_course_facts_schema
+                            ensure_course_facts_schema(self.db_path)
+                        except Exception:
+                            pass
+                        cur.execute("SELECT COUNT(*) FROM course_facts")
+                        if cur.fetchone()[0] > 0:
+                            conn.close()
+                            return
                 conn.close()
             except Exception:
                 pass
@@ -392,7 +396,14 @@ class QueryRouter:
 
     def classify_intent(self, query: str) -> str:
         """Determines if query targets structured stats or qualitative syllabus text."""
-        sql_keywords = ["available seats", "grade threshold", "duration", "tuition", "fee", "salary", "credits", "how long", "placement", "project credits", "entry requirement"]
+        sql_keywords = [
+            "available seats", "grade threshold", "duration", "tuition", "fee", "salary",
+            "credits", "how long", "placement", "project credits", "entry requirement",
+            "ranking", "rank", "guardian", "league table", "qs rank", "tef", "nss",
+            "satisfaction", "wellbeing", "accredited", "bcs", "entry tariff", "ucas points",
+            "tariff", "a-level", "a level", "year abroad", "foundation year",
+            "international fee", "employment rate", "median salary",
+        ]
         if any(kw in query.lower() for kw in sql_keywords):
             return "SQL"
         return "HYBRID_VECTOR"
@@ -450,17 +461,35 @@ class QueryRouter:
                 "university",
                 "course_title",
                 "ucas_code",
+                "kis_course_id",
+                "kis_mode",
                 "duration_years",
+                "is_honours",
+                "has_foundation_year",
                 "has_placement_year",
-                "uk_tuition_fee",
-                "international_tuition_fee",
-                "median_salary_3yr",
-                "employment_rate_15m",
-                "final_year_project_credits",
-                "a_level_requirement",
-                "bcs_accredited",
+                "has_year_abroad",
+                "is_distance_learning",
                 "entry_tariff",
+                "alevel_requirement",
+                "pct_entrants_alevel",
+                "pct_entrants_bacc",
+                "tuition_fee_uk",
+                "tuition_fee_intl",
+                "tef_overall_rating",
+                "tef_student_experience",
                 "bcs_accredited",
+                "employment_rate_15m",
+                "pct_professional_managerial",
+                "median_salary_go",
+                "median_salary_leo3",
+                "median_salary_leo5",
+                "final_year_project_credits",
+                "guardian_rank",
+                "cug_rank",
+                "qs_rank",
+                "nss_teaching_satisfaction",
+                "nss_facilities_resources",
+                "nss_mental_wellbeing",
             ]
             selected_columns = [name for name in preferred_columns if name in available_columns]
             if not selected_columns:
@@ -630,6 +659,27 @@ Admissions Advisor Response:"""
             "project credits",
             "entry requirement",
             "credits",
+            "ranking",
+            "rank",
+            "guardian",
+            "league table",
+            "qs rank",
+            "tef",
+            "nss",
+            "satisfaction",
+            "wellbeing",
+            "accredited",
+            "bcs",
+            "entry tariff",
+            "ucas points",
+            "tariff",
+            "a-level",
+            "a level",
+            "year abroad",
+            "foundation year",
+            "international fee",
+            "professional",
+            "managerial",
         ])
 
     def _resolve_word_limit(self, user_query: str) -> int | None:
@@ -700,37 +750,106 @@ Admissions Advisor Response:"""
                 for record in records:
                     university = record.get("university") or record.get("institution") or "Unknown"
                     detail_parts = []
-                    tuition_fee = record.get("uk_tuition_fee")
-                    if tuition_fee is None:
-                        tuition_fee = record.get("tuition_fee")
-                    if tuition_fee is not None:
-                        detail_parts.append(f"Tuition fee: £{tuition_fee:,.0f} per year")
+
+                    course_title = record.get("course_title") or record.get("degree")
+                    if course_title:
+                        detail_parts.append(f"Course: {course_title}")
+
+                    ucas_code = record.get("ucas_code")
+                    if ucas_code:
+                        detail_parts.append(f"UCAS code: {ucas_code}")
 
                     duration_years = record.get("duration_years")
                     if duration_years is not None:
                         detail_parts.append(f"Duration: {duration_years} years")
 
-                    salary = record.get("median_salary_3yr")
-                    if salary is None:
-                        salary = record.get("median_salary")
-                    if salary is not None:
-                        detail_parts.append(f"Median salary: £{salary:,.0f}")
+                    # Tuition fees — new column names with legacy fallback
+                    tuition_fee = record.get("tuition_fee_uk") or record.get("uk_tuition_fee") or record.get("tuition_fee")
+                    if tuition_fee is not None:
+                        try:
+                            detail_parts.append(f"UK tuition fee: £{float(tuition_fee):,.0f} per year")
+                        except (ValueError, TypeError):
+                            detail_parts.append(f"UK tuition fee: {tuition_fee}")
+
+                    tuition_intl = record.get("tuition_fee_intl") or record.get("international_tuition_fee")
+                    if tuition_intl is not None:
+                        try:
+                            detail_parts.append(f"Intl tuition fee: £{float(tuition_intl):,.0f}")
+                        except (ValueError, TypeError):
+                            detail_parts.append(f"Intl tuition fee: {tuition_intl}")
+
+                    entry_tariff = record.get("entry_tariff")
+                    if entry_tariff is not None:
+                        detail_parts.append(f"Avg entry tariff: {entry_tariff:.0f} UCAS pts")
+
+                    alevel_req = record.get("alevel_requirement") or record.get("a_level_requirement")
+                    if alevel_req:
+                        detail_parts.append(f"A-level requirement: {alevel_req}")
 
                     placement = record.get("has_placement_year")
                     if placement is not None:
                         detail_parts.append(f"Placement year: {'Yes' if placement else 'No'}")
 
+                    has_year_abroad = record.get("has_year_abroad")
+                    if has_year_abroad is not None:
+                        detail_parts.append(f"Year abroad: {'Yes' if has_year_abroad else 'No'}")
+
+                    # Salary — new columns preferred, with legacy fallback
+                    salary = (
+                        record.get("median_salary_leo3")
+                        or record.get("median_salary_go")
+                        or record.get("median_salary_3yr")
+                        or record.get("median_salary")
+                    )
+                    if salary is not None:
+                        detail_parts.append(f"Median salary (3yr): £{salary:,.0f}")
+
+                    salary_leo5 = record.get("median_salary_leo5")
+                    if salary_leo5 is not None:
+                        detail_parts.append(f"Median salary (5yr): £{salary_leo5:,.0f}")
+
+                    emp_rate = record.get("employment_rate_15m")
+                    if emp_rate is not None:
+                        detail_parts.append(f"Employment rate (15m): {emp_rate:.1f}%")
+
+                    pct_prof = record.get("pct_professional_managerial")
+                    if pct_prof is not None:
+                        detail_parts.append(f"Professional/managerial jobs: {pct_prof:.1f}%")
+
                     project_credits = record.get("final_year_project_credits")
                     if project_credits is not None:
                         detail_parts.append(f"Final year project credits: {project_credits}")
 
-                    if record.get("degree"):
-                        detail_parts.append(f"Course: {record['degree']}")
-                    if record.get("course_title"):
-                        detail_parts.append(f"Course: {record['course_title']}")
+                    bcs = record.get("bcs_accredited")
+                    if bcs is not None:
+                        detail_parts.append(f"BCS accredited: {'Yes' if bcs else 'No'}")
+
+                    tef = record.get("tef_overall_rating")
+                    if tef:
+                        detail_parts.append(f"TEF rating: {tef}")
+
+                    nss_teach = record.get("nss_teaching_satisfaction")
+                    if nss_teach is not None:
+                        detail_parts.append(f"NSS teaching satisfaction: {nss_teach:.1f}%")
+
+                    nss_wellbeing = record.get("nss_mental_wellbeing")
+                    if nss_wellbeing is not None:
+                        detail_parts.append(f"NSS mental wellbeing: {nss_wellbeing:.1f}%")
+
+                    guardian_rank = record.get("guardian_rank")
+                    if guardian_rank is not None:
+                        detail_parts.append(f"Guardian rank: #{guardian_rank}")
+
+                    qs_rank = record.get("qs_rank")
+                    if qs_rank is not None:
+                        detail_parts.append(f"QS rank: #{qs_rank}")
 
                     summary_lines.append(f"- {university}: " + "; ".join(detail_parts))
-                    table_rows.append((university, tuition_fee, duration_years, salary))
+                    try:
+                        tuition_fee_numeric = float(tuition_fee) if tuition_fee is not None else None
+                    except (ValueError, TypeError):
+                        tuition_fee_numeric = None
+                    table_rows.append((university, tuition_fee_numeric, duration_years, salary))
 
                 if summary_lines:
                     if len(table_rows) > 1:
@@ -793,12 +912,12 @@ Admissions Advisor Response:"""
                                 duration_note = f"If you want the shortest study period, {shortest[0]} is the most compact option in this set."
 
                         closing = " ".join(part for part in [affordability_note, duration_note] if part)
-                        return "For a student considering these options, here’s a practical summary: \n" + "\n".join(summary_lines) + "\n\n" + "\n".join(table_lines) + (f"\n\n{closing}" if closing else "") + " [1]"
+                        return "For a student considering these options, here's a practical summary: \n" + "\n".join(summary_lines) + "\n\n" + "\n".join(table_lines) + (f"\n\n{closing}" if closing else "") + " [1]"
 
                     if any(term in query_lower for term in ["duration", "how long", "years", "year"]):
-                        return "For a student considering these options, here’s a practical summary: \n" + "\n".join(summary_lines) + " [1]"
+                        return "For a student considering these options, here's a practical summary: \n" + "\n".join(summary_lines) + " [1]"
 
-                    return "For a student considering these options, here’s a practical summary: \n" + "\n".join(summary_lines) + " [1]"
+                    return "For a student considering these options, here's a practical summary: \n" + "\n".join(summary_lines) + " [1]"
             except Exception:
                 continue
 
@@ -890,13 +1009,16 @@ Admissions Advisor Response:"""
                 return f"The curriculum evidence indicates: {first_content} [1]"
             return self._build_fallback_response("missing curriculum evidence")
 
-        if any(term in query_lower for term in ["tuition", "fee", "salary", "employment", "median", "duration"]):
+        if any(term in query_lower for term in ["tuition", "fee", "salary", "employment", "median", "duration",
+                                                 "ranking", "rank", "tef", "nss", "satisfaction", "wellbeing",
+                                                 "accredited", "bcs", "tariff", "a-level", "year abroad",
+                                                 "foundation year", "international fee", "professional"]):
             structured_summary = self._format_structured_response(user_query, docs, "")
             if structured_summary and structured_summary != "":
                 return structured_summary
             for doc in docs:
                 content = str(getattr(doc, "page_content", "") or "")
-                if "tuition" in content.lower() or "salary" in content.lower() or "fee" in content.lower():
+                if any(term in content.lower() for term in ["tuition", "salary", "fee", "rank", "tef", "nss"]):
                     return f"The available statistics indicate: {content} [1]"
             return self._build_fallback_response("missing statistics evidence")
 
@@ -971,7 +1093,11 @@ Admissions Advisor Response:"""
         if any(term in llm_lower for term in ["i can help", "in general terms", "insufficient information", "not available", "i don't know"]):
             return synthesized
 
-        if any(term in user_query.lower() for term in ["year 1", "year 2", "module", "modules", "curriculum", "tuition", "fee", "salary", "duration", "placement", "project", "entry requirement", "credits"]):
+        if any(term in user_query.lower() for term in ["year 1", "year 2", "module", "modules", "curriculum",
+                                                         "tuition", "fee", "salary", "duration", "placement",
+                                                         "project", "entry requirement", "credits", "ranking",
+                                                         "rank", "tef", "nss", "satisfaction", "wellbeing",
+                                                         "accredited", "bcs", "tariff"]):
             if any(term in self._build_fallback_response("x").lower() for term in ["insufficient information"]):
                 return synthesized
 
@@ -1002,8 +1128,12 @@ Admissions Advisor Response:"""
                         return f"Year {year_number} core modules include {module_text} [1]"
                     return "The retrieved curriculum evidence indicates: " + " | ".join(info[:3]) + " [1][2][3]"
 
-        if any(term in query_lower for term in ["tuition", "fee", "salary", "duration", "placement", "project", "entry requirement", "credits"]):
-            if any(term in evidence_lower for term in ["tuition", "salary", "duration", "placement", "project", "entry requirement", "credits"]):
+        if any(term in query_lower for term in ["tuition", "fee", "salary", "duration", "placement", "project",
+                                                 "entry requirement", "credits", "ranking", "rank", "tef", "nss",
+                                                 "satisfaction", "wellbeing", "accredited", "bcs", "tariff",
+                                                 "a-level", "year abroad", "foundation year", "international fee"]):
+            if any(term in evidence_lower for term in ["tuition", "salary", "duration", "placement", "project",
+                                                       "entry requirement", "credits", "rank", "tef", "nss"]):
                 return self._format_structured_response(user_query, docs, answer) or answer
 
         return answer
@@ -1172,15 +1302,25 @@ Admissions Advisor Response:"""
         evidence_text = " ".join([doc.page_content.lower() for doc in docs if getattr(doc, "page_content", None)])
 
         structured_keywords = [
-            ("tuition", ["tuition", "fee", "cost", "price", "pounds", "£", "uk_tuition_fee"]),
+            ("tuition", ["tuition", "fee", "cost", "price", "pounds", "£", "tuition_fee_uk", "tuition_fee_intl"]),
             ("duration", ["duration", "year", "years", "duration_years"]),
-            ("salary", ["salary", "median", "employment", "graduate", "earnings"]),
+            ("salary", ["salary", "median", "employment", "graduate", "earnings", "median_salary_leo3", "median_salary_go"]),
             ("placement", ["placement", "project", "credits", "entry", "requirement", "requirements"]),
+            ("ranking", ["rank", "guardian", "league", "qs_rank", "guardian_rank"]),
+            ("nss", ["nss", "satisfaction", "wellbeing", "nss_teaching_satisfaction", "nss_mental_wellbeing"]),
+            ("tef", ["tef", "teaching excellence", "tef_overall_rating"]),
         ]
 
         for keyword, evidence_terms in structured_keywords:
-            if keyword in lower_query or any(term in lower_query for term in ["how long", "standard duration", "entry requirement", "project credits", "final year"]):
-                if any(term in lower_query for term in ["tuition", "fee", "cost", "duration", "salary", "placement", "project", "credits", "entry requirement", "how long"]):
+            if keyword in lower_query or any(term in lower_query for term in [
+                "how long", "standard duration", "entry requirement", "project credits", "final year",
+                "ranking", "league table", "nss score", "tef rating", "bcs accredited",
+            ]):
+                if any(term in lower_query for term in [
+                    "tuition", "fee", "cost", "duration", "salary", "placement", "project",
+                    "credits", "entry requirement", "how long", "ranking", "rank", "nss",
+                    "tef", "satisfaction", "wellbeing", "bcs", "tariff",
+                ]):
                     if any(term in evidence_text for term in evidence_terms):
                         return False
                     return True
@@ -1211,7 +1351,10 @@ Admissions Advisor Response:"""
         query_terms = {term for term in lower_query.replace("?", "").split() if len(term) > 3}
         overlap = sum(1 for term in query_terms if term in evidence_text)
 
-        is_structured_query = any(term in lower_query for term in ["tuition", "fee", "duration", "salary", "standard duration", "statistical"])
+        is_structured_query = any(term in lower_query for term in [
+            "tuition", "fee", "duration", "salary", "standard duration", "statistical",
+            "ranking", "rank", "tef", "nss", "satisfaction", "wellbeing", "bcs", "tariff",
+        ])
         if is_structured_query:
             score = max(score, 0.85)
 
@@ -1222,7 +1365,8 @@ Admissions Advisor Response:"""
 
         if any(term in lower_query for term in ["module", "modules", "curriculum", "year"]):
             score += 0.1
-        if any(term in lower_query for term in ["tuition", "fee", "salary", "employment", "statistical", "duration"]):
+        if any(term in lower_query for term in ["tuition", "fee", "salary", "employment", "statistical", "duration",
+                                                 "ranking", "rank", "tef", "nss", "satisfaction", "bcs", "tariff"]):
             score += 0.1
         if any(term in lower_query for term in ["ucas", "code"]):
             score += 0.1
