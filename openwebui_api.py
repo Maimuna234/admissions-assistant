@@ -865,6 +865,7 @@ def api_chat(
         target_competitor=competitor_university or None,
         target_programme=target_programme or None,
         target_baseline=baseline_university or None,
+        priorities=priorities or None,
     )
     return {
         "question": question,

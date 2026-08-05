@@ -438,6 +438,49 @@ class QueryRouter:
             result.append(item)
         return result
 
+    def _resolve_db_names(self, *display_names: str) -> dict:
+        """Map display university names to the exact names stored in course_facts."""
+        result = {}
+        try:
+            conn = sqlite3.connect(self.db_path)
+            c = conn.cursor()
+            db_unis = {r[0].lower(): r[0] for r in c.execute(
+                "SELECT DISTINCT university FROM course_facts"
+            ).fetchall()}
+            conn.close()
+        except Exception:
+            return {n: n for n in display_names}
+
+        for name in display_names:
+            if not name:
+                result[name] = name
+                continue
+            lo = name.lower().strip()
+            # Exact match
+            if lo in db_unis:
+                result[name] = db_unis[lo]
+                continue
+            # Try adding "The "
+            with_the = "the " + lo
+            if with_the in db_unis:
+                result[name] = db_unis[with_the]
+                continue
+            # Try stripping "The "
+            without_the = re.sub(r"^the\s+", "", lo)
+            if without_the in db_unis:
+                result[name] = db_unis[without_the]
+                continue
+            # Partial key match on main keyword (e.g. "liverpool")
+            keywords = [w for w in re.split(r"\s+", lo) if len(w) > 4]
+            for kw in keywords:
+                matches = [v for k, v in db_unis.items() if kw in k]
+                if len(matches) == 1:
+                    result[name] = matches[0]
+                    break
+            else:
+                result[name] = name  # unchanged fallback
+        return result
+
     def execute_sql(
         self,
         query: str,
@@ -497,7 +540,9 @@ class QueryRouter:
             where_clauses = []
             params = []
             if "university" in available_columns:
-                institutions = [name for name in [target_baseline, target_competitor] if name]
+                raw_institutions = [name for name in [target_baseline, target_competitor] if name]
+                name_map = self._resolve_db_names(*raw_institutions)
+                institutions = [name_map.get(n, n) for n in raw_institutions]
                 if institutions:
                     placeholders = ", ".join(["?" for _ in institutions])
                     where_clauses.append(f"university IN ({placeholders})")
@@ -607,6 +652,11 @@ Admissions Advisor Response:"""
         ])
         self.review_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "review_log.jsonl")
         self.trace_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trace_log.jsonl")
+
+    @staticmethod
+    def _uni_key(name: str) -> str:
+        """Normalise a university name for fuzzy comparison (strip 'The ', lowercase, strip)."""
+        return re.sub(r"^the\s+", "", str(name or "").lower().strip())
 
     def _ensure_gemini_models(self):
         if self.gemini_models is None:
@@ -1044,17 +1094,16 @@ Admissions Advisor Response:"""
             return cleaned_answer
 
         structured_evidence = any("structured database results" in str(getattr(doc, "page_content", "") or "").lower() for doc in docs)
-        if structured_evidence and (
-            "available records indicate" in cleaned_answer.lower()
-            or "here’s a clear summary" in cleaned_answer.lower()
-            or "tuition fee" in cleaned_answer.lower()
-            or "duration:" in cleaned_answer.lower()
-            or ("tuition" in cleaned_answer.lower() and "salary" in cleaned_answer.lower())
-        ):
+        # Trust any non-fallback answer when grounded in SQL structured data.
+        if structured_evidence and not any(phrase in cleaned_answer.lower() for phrase in [
+            "insufficient information", "not available", "i don't know", "no relevant context"
+        ]):
             citation_suffix = ""
             if len(docs) > 0:
                 citation_suffix = " " + " ".join(f"[{i}]" for i in range(1, min(len(docs), 3) + 1))
-            return f"{cleaned_answer}{citation_suffix}"
+            if not re.search(r"\[\d+\]", cleaned_answer):
+                return f"{cleaned_answer}{citation_suffix}"
+            return cleaned_answer
 
         evidence_terms = []
         for doc in docs:
@@ -1274,9 +1323,9 @@ Admissions Advisor Response:"""
         matched_institutions = set()
         for doc in docs:
             metadata = getattr(doc, "metadata", {}) or {}
-            institution = str(metadata.get("institution") or metadata.get("university") or "").lower()
+            institution = str(metadata.get("institution") or metadata.get("university") or "")
             if institution:
-                matched_institutions.add(institution)
+                matched_institutions.add(self._uni_key(institution))
             content = str(getattr(doc, "page_content", "") or "")
             if "Structured Database Results:" in content:
                 try:
@@ -1284,9 +1333,9 @@ Admissions Advisor Response:"""
                     rows = json.loads(payload)
                     if isinstance(rows, list):
                         for row in rows:
-                            row_uni = str((row or {}).get("university") or (row or {}).get("institution") or "").lower()
+                            row_uni = str((row or {}).get("university") or (row or {}).get("institution") or "")
                             if row_uni:
-                                matched_institutions.add(row_uni)
+                                matched_institutions.add(self._uni_key(row_uni))
                 except Exception:
                     pass
         return matched_institutions
@@ -1382,16 +1431,326 @@ Admissions Advisor Response:"""
             return False, reason
         return True, ""
 
+
+    def _run_priority_comparison(
+        self,
+        user_query: str,
+        priorities: list,
+        target_baseline: str,
+        target_competitor: str,
+        target_programme: str | None,
+    ) -> str | None:
+        """Fetch SQL + KB data for both universities and call Gemini for a priority-by-priority comparison."""
+
+        # Resolve DB names before querying (handles "The University of X" variants)
+        name_map = self.query_router._resolve_db_names(target_baseline, target_competitor)
+        db_baseline = name_map.get(target_baseline, target_baseline)
+        db_competitor = name_map.get(target_competitor, target_competitor)
+
+        sql_docs = self.query_router.execute_sql(
+            user_query,
+            target_competitor=db_competitor,
+            target_programme=target_programme,
+            target_baseline=db_baseline,
+        )
+        baseline_row: dict = {}
+        competitor_row: dict = {}
+        for doc in sql_docs:
+            content = str(getattr(doc, "page_content", "") or "")
+            if "Structured Database Results:" not in content:
+                continue
+            try:
+                rows = json.loads(content.split("Structured Database Results:", 1)[1].strip())
+                for row in (rows if isinstance(rows, list) else []):
+                    uni = str(row.get("university") or "").lower()
+                    if uni == target_baseline.lower() and not baseline_row:
+                        baseline_row = row
+                    elif uni == target_competitor.lower() and not competitor_row:
+                        competitor_row = row
+            except Exception:
+                pass
+
+        # Pick the best-matching row per university when SQL returned multiple
+        def _best_row(rows_json_src: list, uni_display: str) -> dict:
+            """From multiple course_facts rows for one university, pick the CS BSc row."""
+            candidates = [r for r in rows_json_src if self._uni_key(str(r.get("university",""))) == self._uni_key(uni_display)]
+            if not candidates:
+                return {}
+            # Prefer exact "Computer Science" title; then any CS course
+            for title_pref in ["computer science", "computer science bsc"]:
+                for r in candidates:
+                    if r.get("course_title","").lower().strip() == title_pref:
+                        return r
+            cs_rows = [r for r in candidates if "computer science" in r.get("course_title","").lower() and "with" not in r.get("course_title","").lower() and "(" not in r.get("course_title","")]
+            return cs_rows[0] if cs_rows else candidates[0]
+
+        # Re-extract from sql_docs using best-row selector
+        all_sql_rows: list = []
+        for doc in sql_docs:
+            content = str(getattr(doc, "page_content", "") or "")
+            if "Structured Database Results:" in content:
+                try:
+                    all_sql_rows.extend(json.loads(content.split("Structured Database Results:", 1)[1].strip()))
+                except Exception:
+                    pass
+        baseline_row = _best_row(all_sql_rows, target_baseline)
+        competitor_row = _best_row(all_sql_rows, target_competitor)
+
+        # ── Supplement missing/placeholder fields from KB ─────────────────────
+        PLACEHOLDER_VALUES = {None, "Needs verification", "Not published centrally", "Not found", ""}
+        kb_entries = self.knowledge_base_retriever._entries or []
+        if kb_entries is None:
+            kb_entries = self.knowledge_base_retriever._load_entries()
+
+        def _supplement_from_kb(row: dict, display_name: str) -> dict:
+            row = dict(row)  # copy so we don't mutate
+            entry = next(
+                (e for e in kb_entries if self._uni_key(e.get("university_name","")) == self._uni_key(display_name)),
+                None
+            )
+            if not entry:
+                return row
+            metrics = entry.get("metrics", {})
+            layers = entry.get("knowledge_layers", {})
+
+            # Numeric fields from KB metrics
+            if row.get("tuition_fee_uk") in PLACEHOLDER_VALUES:
+                fee = metrics.get("annual_tuition_fee_uk")
+                if fee:
+                    row["tuition_fee_uk"] = f"\u00a3{int(fee):,}/year"
+            if row.get("median_salary_leo3") in PLACEHOLDER_VALUES:
+                sal = metrics.get("leo_median_salary_3_years")
+                if sal:
+                    row["median_salary_leo3"] = float(sal)
+            if row.get("employment_rate_15m") in PLACEHOLDER_VALUES:
+                emp = metrics.get("graduate_in_work_15_months_pct")
+                if emp:
+                    row["employment_rate_15m"] = float(emp)
+
+            # Qualitative text layers
+            row["_entry_text"] = layers.get("entry_requirements", "")
+            row["_curriculum_text"] = " | ".join(filter(None, [
+                layers.get("curriculum_year_1",""),
+                layers.get("curriculum_year_2",""),
+                layers.get("curriculum_year_3",""),
+            ]))
+            row["_placement_text"] = layers.get("industrial_placements","")
+            row["_career_text"] = layers.get("career_outcomes","")
+            row["_support_text"] = layers.get("student_support","")
+            return row
+
+        baseline_row = _supplement_from_kb(baseline_row, target_baseline)
+        competitor_row = _supplement_from_kb(competitor_row, target_competitor)
+
+        if not baseline_row and not competitor_row:
+            return None
+
+        kb_docs = self.knowledge_base_retriever.search(
+            user_query, top_k=6,
+            allowed_institutions=[target_baseline, target_competitor],
+        )
+        kb_base = " ".join(
+            doc.page_content[:300]
+            for doc in kb_docs
+            if self._uni_key((getattr(doc, "metadata", {}) or {}).get("institution", "")) == self._uni_key(target_baseline)
+        )
+        kb_comp = " ".join(
+            doc.page_content[:300]
+            for doc in kb_docs
+            if self._uni_key((getattr(doc, "metadata", {}) or {}).get("institution", "")) == self._uni_key(target_competitor)
+        )
+
+        def _v(row: dict, key: str, prefix: str = "", suffix: str = "", decimals: int = 0) -> str:
+            val = row.get(key)
+            if val is None:
+                return "N/A"
+            try:
+                f = float(val)
+                return f"{prefix}{f:,.{decimals}f}{suffix}" if decimals else f"{prefix}{f:,.0f}{suffix}"
+            except (ValueError, TypeError):
+                return str(val)
+
+        context_blocks = []
+        for priority in priorities:
+            p = str(priority).lower()
+            b: list = []
+            c: list = []
+
+            if "entry" in p:
+                for parts, row in [(b, baseline_row), (c, competitor_row)]:
+                    alevel = row.get("alevel_requirement")
+                    if alevel not in (None, "Needs verification", "Not found", ""):
+                        parts.append(f"A-level requirement: {alevel}")
+                    if row.get("entry_tariff"):
+                        parts.append(f"Avg entry tariff: {_v(row, 'entry_tariff')} UCAS pts")
+                    if row.get("pct_entrants_alevel") is not None:
+                        parts.append(f"Entrants via A-level: {_v(row, 'pct_entrants_alevel', suffix='%', decimals=1)}")
+                    parts.append(f"Foundation year: {'Yes' if row.get('has_foundation_year') else 'No'}")
+                    entry_text = row.get("_entry_text", "")
+                    if entry_text:
+                        parts.append(f"Entry requirements detail: {entry_text[:300]}")
+
+            elif "curriculum" in p or "accredit" in p:
+                for parts, row, kb in [(b, baseline_row, kb_base), (c, competitor_row, kb_comp)]:
+                    parts.append(f"BCS accredited: {'Yes' if row.get('bcs_accredited') else 'No'}")
+                    parts.append(f"Placement year: {'Yes' if row.get('has_placement_year') else 'No'}")
+                    parts.append(f"Year abroad: {'Yes' if row.get('has_year_abroad') else 'No'}")
+                    proj = row.get("final_year_project_credits")
+                    if proj not in (None, "Not found", ""):
+                        parts.append(f"Final year project credits: {proj}")
+                    curriculum_text = row.get("_curriculum_text", "") or kb.strip()
+                    if curriculum_text:
+                        parts.append(f"Curriculum: {curriculum_text[:350]}")
+                    placement_text = row.get("_placement_text", "")
+                    if placement_text:
+                        parts.append(f"Placement detail: {placement_text[:200]}")
+
+            elif "graduate" in p or "salary" in p or "outcome" in p:
+                pound = chr(163)
+                for parts, row in [(b, baseline_row), (c, competitor_row)]:
+                    sal3 = _v(row, "median_salary_leo3", prefix=pound)
+                    if sal3 != "N/A":
+                        parts.append(f"Median salary 3yr (LEO): {sal3}")
+                    sal5 = _v(row, "median_salary_leo5", prefix=pound)
+                    if sal5 != "N/A":
+                        parts.append(f"Median salary 5yr (LEO): {sal5}")
+                    sal_go = _v(row, "median_salary_go", prefix=pound)
+                    if sal_go != "N/A":
+                        parts.append(f"Graduate outcomes salary: {sal_go}")
+                    if row.get("employment_rate_15m") not in (None, "N/A"):
+                        parts.append(f"Employment rate 15m: {_v(row, 'employment_rate_15m', suffix='%', decimals=1)}")
+                    if row.get("pct_professional_managerial") is not None:
+                        parts.append(f"Professional/managerial: {_v(row, 'pct_professional_managerial', suffix='%', decimals=1)}")
+                    career_text = row.get("_career_text", "")
+                    if career_text:
+                        parts.append(f"Career outcomes: {career_text[:250]}")
+
+            elif "fee" in p or "cost" in p:
+                for parts, row in [(b, baseline_row), (c, competitor_row)]:
+                    fee_uk = row.get("tuition_fee_uk")
+                    if fee_uk not in (None, "Not published centrally", ""):
+                        parts.append(f"UK tuition fee: {fee_uk}")
+                    else:
+                        parts.append("UK tuition fee: £9,250/year (standard UK rate)")
+                    fee_intl = row.get("tuition_fee_intl")
+                    if fee_intl not in (None, "Not published centrally", ""):
+                        parts.append(f"International fee: {fee_intl}")
+                    else:
+                        parts.append("International fee: See university website")
+
+            elif "teaching" in p or "nss" in p or "quality" in p:
+                for parts, row in [(b, baseline_row), (c, competitor_row)]:
+                    if row.get("nss_teaching_satisfaction") is not None:
+                        parts.append(f"NSS teaching satisfaction: {_v(row, 'nss_teaching_satisfaction', suffix='%', decimals=1)}")
+                    if row.get("nss_mental_wellbeing") is not None:
+                        parts.append(f"NSS mental wellbeing: {_v(row, 'nss_mental_wellbeing', suffix='%', decimals=1)}")
+                    if row.get("nss_facilities_resources") is not None:
+                        parts.append(f"NSS facilities: {_v(row, 'nss_facilities_resources', suffix='%', decimals=1)}")
+                    parts.append(f"TEF overall: {row.get('tef_overall_rating') or 'N/A'}")
+                    parts.append(f"TEF student experience: {row.get('tef_student_experience') or 'N/A'}")
+
+            elif "rank" in p:
+                for parts, row in [(b, baseline_row), (c, competitor_row)]:
+                    parts.append(f"Guardian rank: {_v(row, 'guardian_rank', prefix='#') if row.get('guardian_rank') else 'N/A'}")
+                    parts.append(f"CUG rank: {_v(row, 'cug_rank', prefix='#') if row.get('cug_rank') else 'N/A'}")
+                    parts.append(f"QS world rank: {_v(row, 'qs_rank', prefix='#') if row.get('qs_rank') else 'N/A'}")
+
+            if b or c:
+                label = str(priority).split("(")[0].strip()
+                context_blocks.append(
+                    f"=== {label} ===\n"
+                    f"{target_baseline}:\n" + "\n".join(f"  - {x}" for x in b) + "\n"
+                    + f"{target_competitor}:\n" + "\n".join(f"  - {x}" for x in c)
+                )
+
+        if not context_blocks:
+            return None
+
+        context_str = "\n\n".join(context_blocks)
+        programme = target_programme or "Computer Science BSc"
+        priority_list = "\n".join(f"{i+1}. {str(p).split('(')[0].strip()}" for i, p in enumerate(priorities))
+
+        comparison_prompt = (
+            f"You are an expert UK university admissions guide tutor.\n\n"
+            f"A student is comparing {programme} at {target_baseline} vs {target_competitor}.\n\n"
+            f"VERIFIED DATA FROM DATABASE (use ONLY this, do not use outside knowledge):\n{context_str}\n\n"
+            f"Write a structured comparison covering EACH priority below.\n"
+            f"For EACH priority use this exact format:\n"
+            f"## [number]. [Priority Name]\n"
+            f"**{target_baseline}:** bullet facts from data\n"
+            f"**{target_competitor}:** bullet facts from data\n"
+            f"**Winner:** [university] — one sentence reason based on data\n\n"
+            f"Priorities:\n{priority_list}\n\n"
+            f"## OVERALL RECOMMENDATION\n"
+            f"End with a | Priority | Best Choice | Reason | markdown table, then 2–3 sentences of tutor advice.\n"
+            f"Write N/A where data is missing. Do not invent facts."
+        )
+
+        gemini_models = self._ensure_gemini_models()
+        if not gemini_models:
+            return None
+
+        for model_name in gemini_models:
+            try:
+                llm = ChatGoogleGenerativeAI(
+                    model=model_name, temperature=0.1, google_api_key=self.api_key,
+                )
+                chain = ChatPromptTemplate.from_messages([
+                    HumanMessagePromptTemplate.from_template("{prompt}")
+                ]) | llm | StrOutputParser()
+                result = chain.invoke({"prompt": comparison_prompt})
+                if isinstance(result, str) and result.strip():
+                    print(f"\u2705 Priority comparison generated with [{model_name}].")
+                    return result.strip()
+            except Exception as exc:
+                print(f"\u26a0\ufe0f Priority comparison failed with {model_name}: {exc}")
+
+        return None
+
     def query_pipeline(
         self,
         user_query: str,
         target_competitor: str | None = None,
         target_programme: str | None = None,
         target_baseline: str | None = None,
+        priorities: list | None = None,
     ):
         """Executes Intent Routing -> Retrieval -> LLM Synthesis."""
         start_time = time.time()
         print(f"\n--- 📥 Incoming Query: \"{user_query}\" ---")
+
+        # ── Priority comparison shortcut ─────────────────────────────────────
+        if priorities and target_baseline and target_competitor:
+            print(f"⭐ Priorities given — running structured comparison for [{len(priorities)}] priorities.")
+            comparison_answer = self._run_priority_comparison(
+                user_query, priorities, target_baseline, target_competitor, target_programme
+            )
+            if comparison_answer:
+                sql_docs_cit = self.query_router.execute_sql(
+                    user_query,
+                    target_competitor=target_competitor,
+                    target_programme=target_programme,
+                    target_baseline=target_baseline,
+                )
+                kb_docs_cit = self.knowledge_base_retriever.search(
+                    user_query, top_k=4,
+                    allowed_institutions=[target_baseline, target_competitor],
+                )
+                all_cit_docs = sql_docs_cit + kb_docs_cit
+                citations = self._build_citations(all_cit_docs)
+                self._write_trace_event(user_query, comparison_answer, 0.9, False)
+                return {
+                    "answer": comparison_answer,
+                    "engine_used": "Priority Comparison (Gemini)",
+                    "routing_layer": "SQL+KB",
+                    "latency_seconds": round(time.time() - start_time, 3),
+                    "sources": [item.get("source") for item in citations],
+                    "citations": citations,
+                    "contexts": [doc.page_content for doc in all_cit_docs],
+                    "confidence_score": 0.9,
+                    "should_abstain": False,
+                }
+
 
         retrieval_query = user_query
         if target_competitor:
@@ -1457,8 +1816,8 @@ Admissions Advisor Response:"""
 
         if target_baseline and target_competitor:
             matched_institutions = self._collect_matched_institutions(retrieved_docs)
-            baseline_lower = target_baseline.lower()
-            competitor_lower = target_competitor.lower()
+            baseline_lower = self._uni_key(target_baseline)
+            competitor_lower = self._uni_key(target_competitor)
             if intent_layer == "SQL" and (baseline_lower not in matched_institutions or competitor_lower not in matched_institutions):
                 print("⚠️ SQL returned incomplete university coverage. Retrying with targeted hybrid retrieval.")
                 # Try deterministic local KB first to keep strict-miss responses fast.
