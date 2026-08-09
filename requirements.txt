@@ -27,5 +27,5 @@ pydantic==2.9.2
 
 # Streamlit Cloud deployment
 streamlit==1.38.0
-python-dotenv==1.0.4
+python-dotenv==1.0.1
 rank-bm25==0.2.2
