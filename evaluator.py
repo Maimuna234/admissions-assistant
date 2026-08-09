@@ -114,7 +114,7 @@ class RAGEvaluator:
             },
             {
                 "question": "Tell me everything about the placement year.",
-                "ground_truth": "Information Not Available in Source Documentation."
+                "ground_truth": "Information Not Available in Source Documentation.                                                           "
             }
         ]
 
