@@ -152,6 +152,38 @@ class GroundingTests(unittest.TestCase):
         self.assertIn("Graduate Outcomes & Salary", repaired)
         self.assertNotIn("Insufficient information", repaired)
 
+    def test_priority_coverage_snapshot_flags_low_coverage_priority(self):
+        baseline_row = {
+            "entry_tariff": 160,
+            "alevel_requirement": "AAA",
+            "pct_entrants_alevel": 72.1,
+            "has_foundation_year": True,
+            "median_salary_leo3": 32000,
+            "employment_rate_15m": 91.0,
+            "_career_text": "Strong employment outcomes.",
+        }
+        competitor_row = {
+            "entry_tariff": 150,
+            "alevel_requirement": "AAB",
+            "pct_entrants_alevel": 68.4,
+            "has_foundation_year": False,
+            "median_salary_leo3": 30000,
+            "employment_rate_15m": 88.2,
+            "_career_text": "Good employability.",
+        }
+
+        snapshot = self.orchestrator._priority_coverage_snapshot(
+            ["Entry Requirements", "Fees & Cost"],
+            baseline_row,
+            competitor_row,
+        )
+
+        by_priority = {item["priority"]: item for item in snapshot}
+        self.assertTrue(by_priority["Entry Requirements"]["usable"])
+        self.assertFalse(by_priority["Fees & Cost"]["usable"])
+        self.assertEqual(by_priority["Fees & Cost"]["baseline_ratio"], 0.0)
+        self.assertEqual(by_priority["Fees & Cost"]["competitor_ratio"], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
