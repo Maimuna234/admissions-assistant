@@ -1,5 +1,8 @@
 import os
 
+os.environ.setdefault("STREAMLIT_SERVER_HEADLESS", "true")
+os.environ.setdefault("STREAMLIT_SERVER_FILE_WATCHER_TYPE", "none")
+
 import streamlit as st
 
 from rag_orchestrator import AdmissionsRAGOrchestrator
