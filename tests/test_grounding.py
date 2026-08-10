@@ -84,6 +84,51 @@ class GroundingTests(unittest.TestCase):
         self.assertIn("Sheffield", answer)
         self.assertIn("procedural coding", answer.lower())
 
+    def test_uses_polished_decision_summary_for_comparison_queries(self):
+        docs = [
+            Document(
+                page_content="University of Leeds: entry tariff 160 UCAS points; BCS accredited; median salary £32,000.",
+                metadata={"university": "University of Leeds"},
+            ),
+            Document(
+                page_content="University of Sheffield: entry tariff 150 UCAS points; BCS accredited; median salary £30,000.",
+                metadata={"university": "University of Sheffield"},
+            ),
+        ]
+
+        answer = self.orchestrator._synthesize_answer(
+            "Compare the target programme against the selected competitor university and return a short decision summary.",
+            docs,
+        )
+
+        self.assertIn("Decision summary", answer)
+        self.assertNotIn("The retrieved evidence supports the following answer:", answer)
+        self.assertIn("Leeds", answer)
+        self.assertIn("Sheffield", answer)
+
+    def test_uses_selected_priorities_in_comparison_summary(self):
+        docs = [
+            Document(
+                page_content="University of Leeds: entry tariff 160 UCAS points; BCS accredited; median salary £32,000; tuition fee £9,250/year; NSS teaching satisfaction 82%.",
+                metadata={"university": "University of Leeds"},
+            ),
+            Document(
+                page_content="University of Sheffield: entry tariff 150 UCAS points; BCS accredited; median salary £30,000; tuition fee £9,250/year; NSS teaching satisfaction 80%.",
+                metadata={"university": "University of Sheffield"},
+            ),
+        ]
+
+        answer = self.orchestrator._synthesize_answer(
+            "Compare the target programme against the selected competitor university and return a short decision summary.",
+            docs,
+            priorities=["Entry Requirements", "Graduate Outcomes & Salary"],
+        )
+
+        self.assertIn("Entry Requirements", answer)
+        self.assertIn("Graduate Outcomes & Salary", answer)
+        self.assertIn("160 UCAS", answer)
+        self.assertIn("£32,000", answer)
+
 
 if __name__ == "__main__":
     unittest.main()

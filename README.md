@@ -236,6 +236,16 @@ This starts:
 
 See `OPENWEBUI_DEPLOYMENT.md` for full setup instructions.
 
+## Streamlit Community Cloud Deployment
+
+This repository also supports deployment to Streamlit Community Cloud. The app entrypoint is `app.py` and the deployment guide is available in `STREAMLIT_DEPLOYMENT.md`.
+
+### Quick steps
+1. Push the repository to GitHub.
+2. Create a Streamlit Cloud app pointing to `app.py`.
+3. Add your Gemini API key as a Streamlit secret named `GEMINI_API_KEY`.
+4. Deploy.
+
 ---
 
 ## Environment Variables

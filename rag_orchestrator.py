@@ -1010,7 +1010,134 @@ Admissions Advisor Response:"""
             print(f"⚠️ Structured summary Gemini rewrite failed: {' | '.join(generation_errors)}")
         return None
 
-    def _synthesize_answer(self, user_query: str, docs) -> str:
+    def _extract_comparison_metrics(self, content: str) -> dict:
+        """Pull a few admissions-friendly metrics from a document snippet."""
+        metrics = {}
+        entry_match = re.search(r"entry tariff\s+(\d+)", content, re.IGNORECASE)
+        if entry_match:
+            metrics["entry_tariff"] = int(entry_match.group(1))
+
+        salary_match = re.search(r"median salary\s+£?([\d,]+)", content, re.IGNORECASE)
+        if salary_match:
+            metrics["median_salary"] = int(salary_match.group(1).replace(",", ""))
+
+        if "bcs accredited" in content.lower():
+            metrics["bcs_accredited"] = True
+
+        return metrics
+
+    def _build_polished_comparison_summary(self, docs, priorities: list | None = None) -> str | None:
+        """Create a concise decision-style comparison summary from retrieved evidence."""
+        if not docs:
+            return None
+
+        parsed_rows = []
+        for doc in docs:
+            content = str(getattr(doc, "page_content", "") or "")
+            if not content:
+                continue
+
+            metadata = getattr(doc, "metadata", {}) or {}
+            institution = metadata.get("university") or metadata.get("institution") or ""
+            if not institution and "for " in content and " (" in content:
+                institution = content.split("for ", 1)[1].split(" (", 1)[0].strip()
+            if not institution:
+                institution = "Institution"
+
+            parsed_rows.append((institution, self._extract_comparison_metrics(content), content))
+
+        if len(parsed_rows) < 2:
+            return None
+
+        normalized_priorities = [str(priority).split("(")[0].strip() for priority in (priorities or []) if str(priority).strip()]
+        if normalized_priorities:
+            priority_bits = []
+            for priority in normalized_priorities:
+                p = priority.lower()
+                if "entry" in p:
+                    values = []
+                    for institution, metrics, _ in parsed_rows[:2]:
+                        if metrics.get("entry_tariff") is not None:
+                            values.append(f"{institution}: {metrics['entry_tariff']} UCAS points")
+                    if values:
+                        priority_bits.append(f"{priority}: {'; '.join(values)}")
+                elif "graduate" in p or "salary" in p or "outcome" in p:
+                    values = []
+                    for institution, metrics, _ in parsed_rows[:2]:
+                        if metrics.get("median_salary") is not None:
+                            values.append(f"{institution}: £{metrics['median_salary']:,}")
+                    if values:
+                        priority_bits.append(f"{priority}: {'; '.join(values)}")
+                elif "fee" in p or "cost" in p:
+                    values = []
+                    for institution, metrics, content in parsed_rows[:2]:
+                        fee_match = re.search(r"£([0-9,]+)", content)
+                        if fee_match:
+                            values.append(f"{institution}: £{fee_match.group(1)}")
+                    if values:
+                        priority_bits.append(f"{priority}: {'; '.join(values)}")
+                elif "curriculum" in p or "accredit" in p:
+                    values = []
+                    for institution, metrics, content in parsed_rows[:2]:
+                        if metrics.get("bcs_accredited"):
+                            values.append(f"{institution}: BCS accredited")
+                        elif "curriculum" in content.lower() or "module" in content.lower():
+                            values.append(f"{institution}: curriculum evidence available")
+                    if values:
+                        priority_bits.append(f"{priority}: {'; '.join(values)}")
+                elif "teaching" in p or "nss" in p or "quality" in p:
+                    values = []
+                    for institution, metrics, content in parsed_rows[:2]:
+                        if "nss" in content.lower() or "teaching satisfaction" in content.lower():
+                            values.append(f"{institution}: teaching quality evidence available")
+                    if values:
+                        priority_bits.append(f"{priority}: {'; '.join(values)}")
+                elif "rank" in p:
+                    values = []
+                    for institution, metrics, content in parsed_rows[:2]:
+                        if "rank" in content.lower():
+                            values.append(f"{institution}: ranking evidence available")
+                    if values:
+                        priority_bits.append(f"{priority}: {'; '.join(values)}")
+
+            if priority_bits:
+                recommendation = ""
+                if len(parsed_rows) >= 2:
+                    first_inst, first_metrics, _ = parsed_rows[0]
+                    second_inst, second_metrics, _ = parsed_rows[1]
+                    wins = 0
+                    if first_metrics.get("entry_tariff") is not None and second_metrics.get("entry_tariff") is not None:
+                        wins += 1 if first_metrics["entry_tariff"] >= second_metrics["entry_tariff"] else -1
+                    if first_metrics.get("median_salary") is not None and second_metrics.get("median_salary") is not None:
+                        wins += 1 if first_metrics["median_salary"] >= second_metrics["median_salary"] else -1
+                    if wins > 0:
+                        recommendation = f" Recommendation: {first_inst} appears stronger for the selected priorities."
+                    elif wins < 0:
+                        recommendation = f" Recommendation: {second_inst} appears stronger for the selected priorities."
+                    else:
+                        recommendation = " Recommendation: the evidence is closely matched for the selected priorities."
+                return "Decision summary: " + " | ".join(priority_bits[:3]) + recommendation + " [1][2]"
+
+        summary_bits = []
+        for institution, metrics, content in parsed_rows[:2]:
+            parts = []
+            if metrics.get("entry_tariff") is not None:
+                parts.append(f"entry tariff {metrics['entry_tariff']} UCAS points")
+            if metrics.get("bcs_accredited"):
+                parts.append("BCS accredited")
+            if metrics.get("median_salary") is not None:
+                parts.append(f"median salary £{metrics['median_salary']:,}")
+            if parts:
+                summary_bits.append(f"{institution}: " + "; ".join(parts))
+            else:
+                summary_bits.append(f"{institution}: {content}")
+
+        if not summary_bits:
+            return None
+
+        return "Decision summary: " + " | ".join(summary_bits[:2]) + " [1][2]"
+
+    def _synthesize_answer(self, user_query: str, docs, priorities: list | None = None) -> str:
         """Create a concise admissions-style answer from the retrieved evidence."""
         if not docs:
             return self._build_fallback_response("no evidence")
@@ -1072,12 +1199,16 @@ Admissions Advisor Response:"""
                     return f"The available statistics indicate: {content} [1]"
             return self._build_fallback_response("missing statistics evidence")
 
-        if any(term in query_lower for term in ["compare", "difference", "which"]):
+        if any(term in query_lower for term in ["compare", "difference", "which", "decision summary"]):
+            polished_summary = self._build_polished_comparison_summary(docs, priorities=priorities)
+            if polished_summary:
+                return polished_summary
+
             summaries = []
             for doc in docs[:3]:
                 content = str(getattr(doc, "page_content", "") or "")
                 summaries.append(content)
-            return "The retrieved evidence suggests the following comparison: " + " | ".join(summaries[:2]) + " [1][2]"
+            return "Decision summary: " + " | ".join(summaries[:2]) + " [1][2]"
 
         return f"The retrieved evidence supports the following answer: {evidence_blocks[0]} [1]"
 
@@ -1722,22 +1853,23 @@ Admissions Advisor Response:"""
         # ── Priority comparison shortcut ─────────────────────────────────────
         if priorities and target_baseline and target_competitor:
             print(f"⭐ Priorities given — running structured comparison for [{len(priorities)}] priorities.")
+            sql_docs_cit = self.query_router.execute_sql(
+                user_query,
+                target_competitor=target_competitor,
+                target_programme=target_programme,
+                target_baseline=target_baseline,
+            )
+            kb_docs_cit = self.knowledge_base_retriever.search(
+                user_query, top_k=4,
+                allowed_institutions=[target_baseline, target_competitor],
+            )
+            all_cit_docs = sql_docs_cit + kb_docs_cit
+            citations = self._build_citations(all_cit_docs)
+
             comparison_answer = self._run_priority_comparison(
                 user_query, priorities, target_baseline, target_competitor, target_programme
             )
             if comparison_answer:
-                sql_docs_cit = self.query_router.execute_sql(
-                    user_query,
-                    target_competitor=target_competitor,
-                    target_programme=target_programme,
-                    target_baseline=target_baseline,
-                )
-                kb_docs_cit = self.knowledge_base_retriever.search(
-                    user_query, top_k=4,
-                    allowed_institutions=[target_baseline, target_competitor],
-                )
-                all_cit_docs = sql_docs_cit + kb_docs_cit
-                citations = self._build_citations(all_cit_docs)
                 self._write_trace_event(user_query, comparison_answer, 0.9, False)
                 return {
                     "answer": comparison_answer,
@@ -1750,6 +1882,24 @@ Admissions Advisor Response:"""
                     "confidence_score": 0.9,
                     "should_abstain": False,
                 }
+
+            fallback_answer = self._synthesize_answer(
+                f"{user_query}\nCompare {target_programme or 'the programme'} at {target_baseline} against {target_competitor} using the selected priorities.",
+                all_cit_docs,
+                priorities=priorities,
+            )
+            self._write_trace_event(user_query, fallback_answer, 0.75, False)
+            return {
+                "answer": fallback_answer,
+                "engine_used": "Local synthesis fallback",
+                "routing_layer": "SQL+KB",
+                "latency_seconds": round(time.time() - start_time, 3),
+                "sources": [item.get("source") for item in citations],
+                "citations": citations,
+                "contexts": [doc.page_content for doc in all_cit_docs],
+                "confidence_score": 0.75,
+                "should_abstain": False,
+            }
 
 
         retrieval_query = user_query
