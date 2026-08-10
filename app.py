@@ -24,6 +24,8 @@ if "orchestrator" not in st.session_state:
 
 if "last_result" not in st.session_state:
     st.session_state.last_result = None
+if "last_error" not in st.session_state:
+    st.session_state.last_error = None
 
 priority_options = [
     "Entry Requirements",
@@ -62,13 +64,22 @@ with st.sidebar:
 
 if submitted:
     with st.spinner("Searching the evidence..."):
-        st.session_state.last_result = st.session_state.orchestrator.query_pipeline(
-            tutor_prompt,
-            target_competitor=competitor_university,
-            target_programme=target_programme,
-            target_baseline=baseline_university,
-            priorities=priorities,
-        )
+        try:
+            st.session_state.last_result = st.session_state.orchestrator.query_pipeline(
+                tutor_prompt,
+                target_competitor=competitor_university,
+                target_programme=target_programme,
+                target_baseline=baseline_university,
+                priorities=priorities,
+            )
+            st.session_state.last_error = None
+        except Exception as exc:
+            st.session_state.last_result = {
+                "answer": f"The comparison could not be generated. Please try again. Error: {exc}",
+                "citations": [],
+                "confidence_score": 0.0,
+            }
+            st.session_state.last_error = str(exc)
 
 left_col, right_col = st.columns([1.35, 0.95], gap="large")
 
@@ -83,6 +94,8 @@ with left_col:
         confidence = st.session_state.last_result.get("confidence_score")
         if confidence is not None:
             st.caption(f"Confidence score: {confidence:.2f}")
+        if st.session_state.last_error:
+            st.warning(st.session_state.last_error)
     else:
         st.info("Your verified comparison will appear here.")
 
