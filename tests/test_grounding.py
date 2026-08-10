@@ -184,6 +184,21 @@ class GroundingTests(unittest.TestCase):
         self.assertEqual(by_priority["Fees & Cost"]["baseline_ratio"], 0.0)
         self.assertEqual(by_priority["Fees & Cost"]["competitor_ratio"], 0.0)
 
+    def test_priority_answer_usability_rejects_low_information_text(self):
+        usable = self.orchestrator._is_priority_answer_usable(
+            "Insufficient information in the provided context to answer this question reliably.",
+            ["Entry Requirements", "Fees & Cost"],
+        )
+
+        self.assertFalse(usable)
+
+        usable_structured = self.orchestrator._is_priority_answer_usable(
+            "## 1. Entry Requirements\nWinner: University of Leeds — higher tariff evidence.\n## OVERALL RECOMMENDATION",
+            ["Entry Requirements", "Fees & Cost"],
+        )
+
+        self.assertTrue(usable_structured)
+
 
 if __name__ == "__main__":
     unittest.main()
