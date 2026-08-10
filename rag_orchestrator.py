@@ -1010,6 +1010,64 @@ Admissions Advisor Response:"""
             print(f"⚠️ Structured summary Gemini rewrite failed: {' | '.join(generation_errors)}")
         return None
 
+    def _extract_comparison_metrics(self, content: str) -> dict:
+        """Pull a few admissions-friendly metrics from a document snippet."""
+        metrics = {}
+        entry_match = re.search(r"entry tariff\s+(\d+)", content, re.IGNORECASE)
+        if entry_match:
+            metrics["entry_tariff"] = int(entry_match.group(1))
+
+        salary_match = re.search(r"median salary\s+£?([\d,]+)", content, re.IGNORECASE)
+        if salary_match:
+            metrics["median_salary"] = int(salary_match.group(1).replace(",", ""))
+
+        if "bcs accredited" in content.lower():
+            metrics["bcs_accredited"] = True
+
+        return metrics
+
+    def _build_polished_comparison_summary(self, docs) -> str | None:
+        """Create a concise decision-style comparison summary from retrieved evidence."""
+        if not docs:
+            return None
+
+        parsed_rows = []
+        for doc in docs:
+            content = str(getattr(doc, "page_content", "") or "")
+            if not content:
+                continue
+
+            metadata = getattr(doc, "metadata", {}) or {}
+            institution = metadata.get("university") or metadata.get("institution") or ""
+            if not institution and "for " in content and " (" in content:
+                institution = content.split("for ", 1)[1].split(" (", 1)[0].strip()
+            if not institution:
+                institution = "Institution"
+
+            parsed_rows.append((institution, self._extract_comparison_metrics(content), content))
+
+        if len(parsed_rows) < 2:
+            return None
+
+        summary_bits = []
+        for institution, metrics, content in parsed_rows[:2]:
+            parts = []
+            if metrics.get("entry_tariff") is not None:
+                parts.append(f"entry tariff {metrics['entry_tariff']} UCAS points")
+            if metrics.get("bcs_accredited"):
+                parts.append("BCS accredited")
+            if metrics.get("median_salary") is not None:
+                parts.append(f"median salary £{metrics['median_salary']:,}")
+            if parts:
+                summary_bits.append(f"{institution}: " + "; ".join(parts))
+            else:
+                summary_bits.append(f"{institution}: {content}")
+
+        if not summary_bits:
+            return None
+
+        return "Decision summary: " + " | ".join(summary_bits[:2]) + " [1][2]"
+
     def _synthesize_answer(self, user_query: str, docs) -> str:
         """Create a concise admissions-style answer from the retrieved evidence."""
         if not docs:
@@ -1072,12 +1130,16 @@ Admissions Advisor Response:"""
                     return f"The available statistics indicate: {content} [1]"
             return self._build_fallback_response("missing statistics evidence")
 
-        if any(term in query_lower for term in ["compare", "difference", "which"]):
+        if any(term in query_lower for term in ["compare", "difference", "which", "decision summary"]):
+            polished_summary = self._build_polished_comparison_summary(docs)
+            if polished_summary:
+                return polished_summary
+
             summaries = []
             for doc in docs[:3]:
                 content = str(getattr(doc, "page_content", "") or "")
                 summaries.append(content)
-            return "The retrieved evidence suggests the following comparison: " + " | ".join(summaries[:2]) + " [1][2]"
+            return "Decision summary: " + " | ".join(summaries[:2]) + " [1][2]"
 
         return f"The retrieved evidence supports the following answer: {evidence_blocks[0]} [1]"
 

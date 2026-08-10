@@ -84,6 +84,28 @@ class GroundingTests(unittest.TestCase):
         self.assertIn("Sheffield", answer)
         self.assertIn("procedural coding", answer.lower())
 
+    def test_uses_polished_decision_summary_for_comparison_queries(self):
+        docs = [
+            Document(
+                page_content="University of Leeds: entry tariff 160 UCAS points; BCS accredited; median salary £32,000.",
+                metadata={"university": "University of Leeds"},
+            ),
+            Document(
+                page_content="University of Sheffield: entry tariff 150 UCAS points; BCS accredited; median salary £30,000.",
+                metadata={"university": "University of Sheffield"},
+            ),
+        ]
+
+        answer = self.orchestrator._synthesize_answer(
+            "Compare the target programme against the selected competitor university and return a short decision summary.",
+            docs,
+        )
+
+        self.assertIn("Decision summary", answer)
+        self.assertNotIn("The retrieved evidence supports the following answer:", answer)
+        self.assertIn("Leeds", answer)
+        self.assertIn("Sheffield", answer)
+
 
 if __name__ == "__main__":
     unittest.main()
