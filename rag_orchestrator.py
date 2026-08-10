@@ -1137,6 +1137,36 @@ Admissions Advisor Response:"""
 
         return "Decision summary: " + " | ".join(summary_bits[:2]) + " [1][2]"
 
+    def _repair_insufficient_comparison_answer(self, answer: str, docs, priorities: list | None = None) -> str:
+        """Replace generic insufficient comparison text with evidence-backed deterministic summary."""
+        cleaned = str(answer or "").strip()
+        if not docs:
+            return cleaned or self._build_fallback_response("no evidence")
+
+        low_info = any(phrase in cleaned.lower() for phrase in [
+            "insufficient information",
+            "not available",
+            "i don't know",
+            "no relevant context",
+        ])
+        if not low_info:
+            return cleaned
+
+        repaired = self._build_polished_comparison_summary(docs, priorities=priorities)
+        if repaired:
+            return repaired
+
+        snippets = []
+        for doc in docs[:2]:
+            snippet = str(getattr(doc, "page_content", "") or "").strip()
+            if snippet:
+                snippets.append(re.sub(r"\s+", " ", snippet)[:220])
+
+        if snippets:
+            return "Decision summary: " + " | ".join(snippets) + " [1][2]"
+
+        return cleaned or self._build_fallback_response("missing comparison evidence")
+
     def _synthesize_answer(self, user_query: str, docs, priorities: list | None = None) -> str:
         """Create a concise admissions-style answer from the retrieved evidence."""
         if not docs:
@@ -1888,6 +1918,11 @@ Admissions Advisor Response:"""
                 all_cit_docs,
                 priorities=priorities,
             )
+            fallback_answer = self._repair_insufficient_comparison_answer(
+                fallback_answer,
+                all_cit_docs,
+                priorities=priorities,
+            )
             self._write_trace_event(user_query, fallback_answer, 0.75, False)
             return {
                 "answer": fallback_answer,
@@ -2109,6 +2144,12 @@ Admissions Advisor Response:"""
             response = self._select_best_response(response, user_query, retrieved_docs)
 
         normalized_answer = self._normalize_answer_from_context(user_query, response, retrieved_docs)
+        if any(term in user_query.lower() for term in ["compare", "difference", "which", "decision summary"]):
+            normalized_answer = self._repair_insufficient_comparison_answer(
+                normalized_answer,
+                retrieved_docs,
+                priorities=priorities,
+            )
         grounded_answer = self._postprocess_grounded_answer(normalized_answer, retrieved_docs)
         grounded_answer = self._enforce_word_limit(grounded_answer, self._resolve_word_limit(user_query))
         self._write_trace_event(user_query, grounded_answer, confidence_score, should_abstain)

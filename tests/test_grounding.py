@@ -129,6 +129,29 @@ class GroundingTests(unittest.TestCase):
         self.assertIn("160 UCAS", answer)
         self.assertIn("£32,000", answer)
 
+    def test_repairs_insufficient_comparison_with_evidence_summary(self):
+        docs = [
+            Document(
+                page_content="University of Leeds: entry tariff 160 UCAS points; median salary £32,000.",
+                metadata={"university": "University of Leeds"},
+            ),
+            Document(
+                page_content="University of Sheffield: entry tariff 150 UCAS points; median salary £30,000.",
+                metadata={"university": "University of Sheffield"},
+            ),
+        ]
+
+        repaired = self.orchestrator._repair_insufficient_comparison_answer(
+            "Insufficient information in the provided context to answer this question reliably.",
+            docs,
+            priorities=["Entry Requirements", "Graduate Outcomes & Salary"],
+        )
+
+        self.assertIn("Decision summary", repaired)
+        self.assertIn("Entry Requirements", repaired)
+        self.assertIn("Graduate Outcomes & Salary", repaired)
+        self.assertNotIn("Insufficient information", repaired)
+
 
 if __name__ == "__main__":
     unittest.main()
