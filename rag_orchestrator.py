@@ -1738,6 +1738,10 @@ Admissions Advisor Response:"""
         lines = []
         wins = {baseline_name: 0, competitor_name: 0}
 
+        def _pair_line(priority_name: str, baseline_value: str, competitor_value: str, winner: str | None, reason: str) -> str:
+            winner_text = f"Winner: {winner}." if winner else "Winner: unavailable from the current evidence."
+            return f"{priority_name}: {baseline_name} {baseline_value} vs {competitor_name} {competitor_value}. {winner_text} {reason}".strip()
+
         for priority in priorities:
             p = str(priority).split("(")[0].strip()
             low = p.lower()
@@ -1746,59 +1750,87 @@ Admissions Advisor Response:"""
             if "entry" in low:
                 b_tariff = self._to_float(baseline_row.get("entry_tariff"))
                 c_tariff = self._to_float(competitor_row.get("entry_tariff"))
+                baseline_value = f"{b_tariff:.0f} UCAS pts" if b_tariff is not None else "N/A"
+                competitor_value = f"{c_tariff:.0f} UCAS pts" if c_tariff is not None else "N/A"
                 if b_tariff is not None and c_tariff is not None:
                     winner = baseline_name if b_tariff >= c_tariff else competitor_name
                     wins[winner] += 1
-                    line = f"{p}: {baseline_name} {b_tariff:.0f} UCAS pts vs {competitor_name} {c_tariff:.0f} UCAS pts. Winner: {winner}."
+                    line = _pair_line(p, baseline_value, competitor_value, winner, "Higher tariff is treated as stronger entry evidence.")
+                else:
+                    line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both tariff values.")
 
             elif "graduate" in low or "salary" in low or "outcome" in low:
                 b_salary = self._to_float(baseline_row.get("median_salary_leo3"))
                 c_salary = self._to_float(competitor_row.get("median_salary_leo3"))
+                baseline_value = f"£{b_salary:,.0f}" if b_salary is not None else "N/A"
+                competitor_value = f"£{c_salary:,.0f}" if c_salary is not None else "N/A"
                 if b_salary is not None and c_salary is not None:
                     winner = baseline_name if b_salary >= c_salary else competitor_name
                     wins[winner] += 1
-                    line = f"{p}: {baseline_name} £{b_salary:,.0f} vs {competitor_name} £{c_salary:,.0f} median salary (3yr). Winner: {winner}."
+                    line = _pair_line(p, baseline_value, competitor_value, winner, "Higher 3-year salary evidence is treated as stronger outcomes evidence.")
+                else:
+                    line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both 3-year salary values.")
 
             elif "fee" in low or "cost" in low:
                 b_fee = self._to_float(baseline_row.get("tuition_fee_uk"))
                 c_fee = self._to_float(competitor_row.get("tuition_fee_uk"))
+                baseline_value = f"£{b_fee:,.0f}/year" if b_fee is not None else "N/A"
+                competitor_value = f"£{c_fee:,.0f}/year" if c_fee is not None else "N/A"
                 if b_fee is not None and c_fee is not None:
                     winner = baseline_name if b_fee <= c_fee else competitor_name
                     wins[winner] += 1
-                    line = f"{p}: {baseline_name} £{b_fee:,.0f}/year vs {competitor_name} £{c_fee:,.0f}/year. Winner: {winner} on cost."
+                    line = _pair_line(p, baseline_value, competitor_value, winner, "Lower tuition fee is treated as stronger value for money.")
+                else:
+                    line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both tuition fee values.")
 
             elif "teaching" in low or "nss" in low or "quality" in low:
                 b_nss = self._to_float(baseline_row.get("nss_teaching_satisfaction"))
                 c_nss = self._to_float(competitor_row.get("nss_teaching_satisfaction"))
+                baseline_value = f"{b_nss:.1f}%" if b_nss is not None else "N/A"
+                competitor_value = f"{c_nss:.1f}%" if c_nss is not None else "N/A"
                 if b_nss is not None and c_nss is not None:
                     winner = baseline_name if b_nss >= c_nss else competitor_name
                     wins[winner] += 1
-                    line = f"{p}: NSS teaching satisfaction {baseline_name} {b_nss:.1f}% vs {competitor_name} {c_nss:.1f}%. Winner: {winner}."
+                    line = _pair_line(p, baseline_value, competitor_value, winner, "Higher NSS teaching satisfaction is treated as stronger teaching evidence.")
+                else:
+                    line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both NSS teaching values.")
 
             elif "rank" in low:
                 b_rank = self._to_float(baseline_row.get("guardian_rank"))
                 c_rank = self._to_float(competitor_row.get("guardian_rank"))
+                baseline_value = f"#{b_rank:.0f}" if b_rank is not None else "N/A"
+                competitor_value = f"#{c_rank:.0f}" if c_rank is not None else "N/A"
                 if b_rank is not None and c_rank is not None:
                     winner = baseline_name if b_rank <= c_rank else competitor_name
                     wins[winner] += 1
-                    line = f"{p}: Guardian rank {baseline_name} #{b_rank:.0f} vs {competitor_name} #{c_rank:.0f}. Winner: {winner}."
+                    line = _pair_line(p, baseline_value, competitor_value, winner, "Lower rank is treated as stronger ranking evidence.")
+                else:
+                    line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both ranking values.")
 
             elif "curriculum" in low or "accredit" in low:
                 b_bcs = baseline_row.get("bcs_accredited")
                 c_bcs = competitor_row.get("bcs_accredited")
+                baseline_value = "Yes" if b_bcs else "No" if b_bcs is not None else "N/A"
+                competitor_value = "Yes" if c_bcs else "No" if c_bcs is not None else "N/A"
                 if b_bcs is not None and c_bcs is not None:
                     if bool(b_bcs) != bool(c_bcs):
                         winner = baseline_name if bool(b_bcs) else competitor_name
                         wins[winner] += 1
-                        line = f"{p}: BCS accreditation differs ({baseline_name}: {'Yes' if b_bcs else 'No'}, {competitor_name}: {'Yes' if c_bcs else 'No'}). Winner: {winner}."
+                        line = _pair_line(p, baseline_value, competitor_value, winner, "BCS accreditation is used as the curriculum/accreditation signal.")
                     else:
-                        line = f"{p}: both options show the same BCS accreditation status."
+                        line = _pair_line(p, baseline_value, competitor_value, None, "Both options show the same BCS accreditation status.")
+                else:
+                    line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both BCS accreditation values.")
 
             if line:
                 lines.append(line)
 
         if not lines:
-            return "Decision summary: Available evidence is limited for the selected priorities. Please refine priorities or update source data."
+            return (
+                "Decision summary: "
+                f"{baseline_name} vs {competitor_name} was requested for {', '.join(str(priority).split('(')[0].strip() for priority in priorities)}. "
+                "The current evidence is too limited to produce a reliable winner, but the selected comparison scope was preserved. [1][2]"
+            )
 
         overall = "the evidence is closely matched"
         if wins[baseline_name] > wins[competitor_name]:
@@ -2087,15 +2119,6 @@ Admissions Advisor Response:"""
             competitor_row,
         )
         local_with_note = local_summary + coverage_note
-
-        gemini_models = self._ensure_gemini_models()
-        if not gemini_models:
-            return local_with_note
-
-        rewritten_summary = self._rewrite_structured_summary_with_gemini(user_query, local_with_note)
-        if rewritten_summary:
-            return rewritten_summary
-
         return local_with_note
 
     def query_pipeline(
