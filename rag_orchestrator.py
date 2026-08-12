@@ -5,8 +5,17 @@ import json
 import sqlite3
 from pathlib import Path
 import numpy as np
-from rank_bm25 import BM25Okapi
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except Exception:  # pragma: no cover - fallback for minimal environments
+    def load_dotenv(*args, **kwargs):
+        return False
+
+try:
+    from rank_bm25 import BM25Okapi
+except ImportError:  # pragma: no cover - optional dependency fallback
+    BM25Okapi = None
 
 
 class KnowledgeBaseFallbackRetriever:
@@ -199,7 +208,7 @@ class CustomHybridRetriever:
         self.metadatas = all_docs.get("metadatas", [])
 
         tokenized_corpus = [str(doc).lower().split() for doc in self.documents] if self.documents else []
-        self.bm25 = BM25Okapi(tokenized_corpus) if tokenized_corpus else None
+        self.bm25 = BM25Okapi(tokenized_corpus) if BM25Okapi and tokenized_corpus else None
 
     def _expand_query(self, query: str):
         q = query.lower()
@@ -252,13 +261,13 @@ class CustomHybridRetriever:
         target_competitor: str | None = None,
         allowed_institutions: list[str] | None = None,
     ):
-        if not self.bm25:
-            return []
-
         expanded_query = self._expand_query(query)
         tokenized_query = expanded_query.lower().split()
-        bm25_scores = self.bm25.get_scores(tokenized_query)
-        bm25_top_indices = np.argsort(bm25_scores)[::-1][:top_k * 3]
+        bm25_scores = None
+        bm25_top_indices = []
+        if self.bm25:
+            bm25_scores = self.bm25.get_scores(tokenized_query)
+            bm25_top_indices = np.argsort(bm25_scores)[::-1][:top_k * 3]
 
         query_kwargs = {
             "query_texts": [expanded_query],
@@ -1592,6 +1601,213 @@ Admissions Advisor Response:"""
             return False, reason
         return True, ""
 
+    def _is_value_present(self, value) -> bool:
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            return normalized not in {
+                "", "n/a", "not available", "not found", "needs verification",
+                "not published centrally", "none", "null", "information not listed",
+            }
+        return value is not None
+
+    def _priority_row_coverage(self, priority: str, row: dict) -> tuple[int, int, list[str]]:
+        p = str(priority).lower()
+        checks: list[tuple[str, list[str]]] = []
+
+        if "entry" in p:
+            checks = [
+                ("alevel_requirement", ["alevel_requirement", "_entry_text"]),
+                ("entry_tariff", ["entry_tariff"]),
+                ("pct_entrants_alevel", ["pct_entrants_alevel"]),
+                ("has_foundation_year", ["has_foundation_year"]),
+            ]
+        elif "curriculum" in p or "accredit" in p:
+            checks = [
+                ("bcs_accredited", ["bcs_accredited"]),
+                ("has_placement_year", ["has_placement_year", "_placement_text"]),
+                ("has_year_abroad", ["has_year_abroad"]),
+                ("curriculum", ["_curriculum_text"]),
+            ]
+        elif "graduate" in p or "salary" in p or "outcome" in p:
+            checks = [
+                ("median_salary_leo3", ["median_salary_leo3"]),
+                ("median_salary_leo5", ["median_salary_leo5"]),
+                ("employment_rate_15m", ["employment_rate_15m"]),
+                ("career_outcomes", ["_career_text"]),
+            ]
+        elif "fee" in p or "cost" in p:
+            checks = [
+                ("tuition_fee_uk", ["tuition_fee_uk"]),
+                ("tuition_fee_intl", ["tuition_fee_intl"]),
+            ]
+        elif "teaching" in p or "nss" in p or "quality" in p:
+            checks = [
+                ("nss_teaching_satisfaction", ["nss_teaching_satisfaction"]),
+                ("nss_mental_wellbeing", ["nss_mental_wellbeing"]),
+                ("nss_facilities_resources", ["nss_facilities_resources"]),
+                ("tef_overall_rating", ["tef_overall_rating"]),
+            ]
+        elif "rank" in p:
+            checks = [
+                ("guardian_rank", ["guardian_rank"]),
+                ("cug_rank", ["cug_rank"]),
+                ("qs_rank", ["qs_rank"]),
+            ]
+
+        if not checks:
+            return 0, 0, []
+
+        present = 0
+        missing: list[str] = []
+        for label, keys in checks:
+            if any(self._is_value_present(row.get(key)) for key in keys):
+                present += 1
+            else:
+                missing.append(label)
+
+        return present, len(checks), missing
+
+    def _priority_coverage_snapshot(self, priorities: list, baseline_row: dict, competitor_row: dict) -> list[dict]:
+        snapshot: list[dict] = []
+        for priority in priorities:
+            label = str(priority).split("(")[0].strip()
+            b_present, b_total, b_missing = self._priority_row_coverage(label, baseline_row or {})
+            c_present, c_total, c_missing = self._priority_row_coverage(label, competitor_row or {})
+
+            b_ratio = (b_present / b_total) if b_total else 0.0
+            c_ratio = (c_present / c_total) if c_total else 0.0
+            usable = b_ratio >= 0.34 and c_ratio >= 0.34
+
+            snapshot.append({
+                "priority": label,
+                "baseline_ratio": round(b_ratio, 2),
+                "competitor_ratio": round(c_ratio, 2),
+                "baseline_missing": b_missing,
+                "competitor_missing": c_missing,
+                "usable": usable,
+            })
+        return snapshot
+
+    def _is_low_information_answer(self, text: str | None) -> bool:
+        if not isinstance(text, str) or not text.strip():
+            return True
+        lowered = text.lower()
+        return any(phrase in lowered for phrase in [
+            "insufficient information",
+            "not available",
+            "i don't know",
+            "no relevant context",
+            "could not be generated",
+        ])
+
+    def _is_priority_answer_usable(self, text: str | None, priorities: list | None) -> bool:
+        if self._is_low_information_answer(text):
+            return False
+        lowered = str(text).lower()
+        if "winner:" in lowered or "overall recommendation" in lowered or "decision summary" in lowered:
+            return True
+        for priority in priorities or []:
+            label = str(priority).split("(")[0].strip().lower()
+            if label and label in lowered:
+                return True
+        return False
+
+    def _to_float(self, value):
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        text = str(value)
+        cleaned = re.sub(r"[^0-9.\-]", "", text)
+        if not cleaned:
+            return None
+        try:
+            return float(cleaned)
+        except ValueError:
+            return None
+
+    def _build_local_priority_summary(
+        self,
+        priorities: list,
+        baseline_name: str,
+        competitor_name: str,
+        baseline_row: dict,
+        competitor_row: dict,
+    ) -> str:
+        """Deterministic local summary used when Gemini is unavailable."""
+        lines = []
+        wins = {baseline_name: 0, competitor_name: 0}
+
+        for priority in priorities:
+            p = str(priority).split("(")[0].strip()
+            low = p.lower()
+            line = None
+
+            if "entry" in low:
+                b_tariff = self._to_float(baseline_row.get("entry_tariff"))
+                c_tariff = self._to_float(competitor_row.get("entry_tariff"))
+                if b_tariff is not None and c_tariff is not None:
+                    winner = baseline_name if b_tariff >= c_tariff else competitor_name
+                    wins[winner] += 1
+                    line = f"{p}: {baseline_name} {b_tariff:.0f} UCAS pts vs {competitor_name} {c_tariff:.0f} UCAS pts. Winner: {winner}."
+
+            elif "graduate" in low or "salary" in low or "outcome" in low:
+                b_salary = self._to_float(baseline_row.get("median_salary_leo3"))
+                c_salary = self._to_float(competitor_row.get("median_salary_leo3"))
+                if b_salary is not None and c_salary is not None:
+                    winner = baseline_name if b_salary >= c_salary else competitor_name
+                    wins[winner] += 1
+                    line = f"{p}: {baseline_name} £{b_salary:,.0f} vs {competitor_name} £{c_salary:,.0f} median salary (3yr). Winner: {winner}."
+
+            elif "fee" in low or "cost" in low:
+                b_fee = self._to_float(baseline_row.get("tuition_fee_uk"))
+                c_fee = self._to_float(competitor_row.get("tuition_fee_uk"))
+                if b_fee is not None and c_fee is not None:
+                    winner = baseline_name if b_fee <= c_fee else competitor_name
+                    wins[winner] += 1
+                    line = f"{p}: {baseline_name} £{b_fee:,.0f}/year vs {competitor_name} £{c_fee:,.0f}/year. Winner: {winner} on cost."
+
+            elif "teaching" in low or "nss" in low or "quality" in low:
+                b_nss = self._to_float(baseline_row.get("nss_teaching_satisfaction"))
+                c_nss = self._to_float(competitor_row.get("nss_teaching_satisfaction"))
+                if b_nss is not None and c_nss is not None:
+                    winner = baseline_name if b_nss >= c_nss else competitor_name
+                    wins[winner] += 1
+                    line = f"{p}: NSS teaching satisfaction {baseline_name} {b_nss:.1f}% vs {competitor_name} {c_nss:.1f}%. Winner: {winner}."
+
+            elif "rank" in low:
+                b_rank = self._to_float(baseline_row.get("guardian_rank"))
+                c_rank = self._to_float(competitor_row.get("guardian_rank"))
+                if b_rank is not None and c_rank is not None:
+                    winner = baseline_name if b_rank <= c_rank else competitor_name
+                    wins[winner] += 1
+                    line = f"{p}: Guardian rank {baseline_name} #{b_rank:.0f} vs {competitor_name} #{c_rank:.0f}. Winner: {winner}."
+
+            elif "curriculum" in low or "accredit" in low:
+                b_bcs = baseline_row.get("bcs_accredited")
+                c_bcs = competitor_row.get("bcs_accredited")
+                if b_bcs is not None and c_bcs is not None:
+                    if bool(b_bcs) != bool(c_bcs):
+                        winner = baseline_name if bool(b_bcs) else competitor_name
+                        wins[winner] += 1
+                        line = f"{p}: BCS accreditation differs ({baseline_name}: {'Yes' if b_bcs else 'No'}, {competitor_name}: {'Yes' if c_bcs else 'No'}). Winner: {winner}."
+                    else:
+                        line = f"{p}: both options show the same BCS accreditation status."
+
+            if line:
+                lines.append(line)
+
+        if not lines:
+            return "Decision summary: Available evidence is limited for the selected priorities. Please refine priorities or update source data."
+
+        overall = "the evidence is closely matched"
+        if wins[baseline_name] > wins[competitor_name]:
+            overall = f"{baseline_name} is stronger overall for the selected supported priorities"
+        elif wins[competitor_name] > wins[baseline_name]:
+            overall = f"{competitor_name} is stronger overall for the selected supported priorities"
+
+        return "Decision summary: " + " | ".join(lines[:4]) + f" Overall recommendation: {overall}. [1][2]"
+
 
     def _run_priority_comparison(
         self,
@@ -1706,6 +1922,23 @@ Admissions Advisor Response:"""
         if not baseline_row and not competitor_row:
             return None
 
+        coverage_snapshot = self._priority_coverage_snapshot(priorities, baseline_row, competitor_row)
+        usable_priorities = [item["priority"] for item in coverage_snapshot if item["usable"]]
+        low_coverage = [item for item in coverage_snapshot if not item["usable"]]
+
+        if not usable_priorities:
+            notes = []
+            for item in low_coverage:
+                notes.append(
+                    f"{item['priority']} (coverage {target_baseline}: {item['baseline_ratio']:.0%}, "
+                    f"{target_competitor}: {item['competitor_ratio']:.0%})"
+                )
+            return (
+                "Data coverage is too limited for the selected priorities. "
+                "Please choose priorities with stronger verified data or update the dataset. "
+                + "Low coverage priorities: " + "; ".join(notes)
+            )
+
         kb_docs = self.knowledge_base_retriever.search(
             user_query, top_k=6,
             allowed_institutions=[target_baseline, target_competitor],
@@ -1732,7 +1965,7 @@ Admissions Advisor Response:"""
                 return str(val)
 
         context_blocks = []
-        for priority in priorities:
+        for priority in usable_priorities:
             p = str(priority).lower()
             b: list = []
             c: list = []
@@ -1746,16 +1979,20 @@ Admissions Advisor Response:"""
                         parts.append(f"Avg entry tariff: {_v(row, 'entry_tariff')} UCAS pts")
                     if row.get("pct_entrants_alevel") is not None:
                         parts.append(f"Entrants via A-level: {_v(row, 'pct_entrants_alevel', suffix='%', decimals=1)}")
-                    parts.append(f"Foundation year: {'Yes' if row.get('has_foundation_year') else 'No'}")
+                    if row.get("has_foundation_year") is not None:
+                        parts.append(f"Foundation year: {'Yes' if row.get('has_foundation_year') else 'No'}")
                     entry_text = row.get("_entry_text", "")
                     if entry_text:
                         parts.append(f"Entry requirements detail: {entry_text[:300]}")
 
             elif "curriculum" in p or "accredit" in p:
                 for parts, row, kb in [(b, baseline_row, kb_base), (c, competitor_row, kb_comp)]:
-                    parts.append(f"BCS accredited: {'Yes' if row.get('bcs_accredited') else 'No'}")
-                    parts.append(f"Placement year: {'Yes' if row.get('has_placement_year') else 'No'}")
-                    parts.append(f"Year abroad: {'Yes' if row.get('has_year_abroad') else 'No'}")
+                    if row.get("bcs_accredited") is not None:
+                        parts.append(f"BCS accredited: {'Yes' if row.get('bcs_accredited') else 'No'}")
+                    if row.get("has_placement_year") is not None:
+                        parts.append(f"Placement year: {'Yes' if row.get('has_placement_year') else 'No'}")
+                    if row.get("has_year_abroad") is not None:
+                        parts.append(f"Year abroad: {'Yes' if row.get('has_year_abroad') else 'No'}")
                     proj = row.get("final_year_project_credits")
                     if proj not in (None, "Not found", ""):
                         parts.append(f"Final year project credits: {proj}")
@@ -1792,12 +2029,12 @@ Admissions Advisor Response:"""
                     if fee_uk not in (None, "Not published centrally", ""):
                         parts.append(f"UK tuition fee: {fee_uk}")
                     else:
-                        parts.append("UK tuition fee: £9,250/year (standard UK rate)")
+                        parts.append("UK tuition fee: N/A")
                     fee_intl = row.get("tuition_fee_intl")
                     if fee_intl not in (None, "Not published centrally", ""):
                         parts.append(f"International fee: {fee_intl}")
                     else:
-                        parts.append("International fee: See university website")
+                        parts.append("International fee: N/A")
 
             elif "teaching" in p or "nss" in p or "quality" in p:
                 for parts, row in [(b, baseline_row), (c, competitor_row)]:
@@ -1829,7 +2066,18 @@ Admissions Advisor Response:"""
 
         context_str = "\n\n".join(context_blocks)
         programme = target_programme or "Computer Science BSc"
-        priority_list = "\n".join(f"{i+1}. {str(p).split('(')[0].strip()}" for i, p in enumerate(priorities))
+        priority_list = "\n".join(f"{i+1}. {p}" for i, p in enumerate(usable_priorities))
+
+        coverage_note = ""
+        if low_coverage:
+            skipped = "; ".join(
+                f"{item['priority']} ({target_baseline}: {item['baseline_ratio']:.0%}, {target_competitor}: {item['competitor_ratio']:.0%})"
+                for item in low_coverage
+            )
+            coverage_note = (
+                "\n\nData coverage note: the following selected priorities have limited evidence and should be treated as low confidence: "
+                + skipped
+            )
 
         comparison_prompt = (
             f"You are an expert UK university admissions guide tutor.\n\n"
@@ -1847,9 +2095,18 @@ Admissions Advisor Response:"""
             f"Write N/A where data is missing. Do not invent facts."
         )
 
+        local_summary = self._build_local_priority_summary(
+            usable_priorities,
+            target_baseline,
+            target_competitor,
+            baseline_row,
+            competitor_row,
+        )
+        local_with_note = local_summary + coverage_note
+
         gemini_models = self._ensure_gemini_models()
         if not gemini_models:
-            return None
+            return local_with_note
 
         for model_name in gemini_models:
             try:
@@ -1862,11 +2119,11 @@ Admissions Advisor Response:"""
                 result = chain.invoke({"prompt": comparison_prompt})
                 if isinstance(result, str) and result.strip():
                     print(f"\u2705 Priority comparison generated with [{model_name}].")
-                    return result.strip()
+                    return result.strip() + coverage_note
             except Exception as exc:
                 print(f"\u26a0\ufe0f Priority comparison failed with {model_name}: {exc}")
 
-        return None
+            return local_with_note
 
     def query_pipeline(
         self,
@@ -1899,11 +2156,13 @@ Admissions Advisor Response:"""
             comparison_answer = self._run_priority_comparison(
                 user_query, priorities, target_baseline, target_competitor, target_programme
             )
-            if comparison_answer:
+            if comparison_answer and self._is_priority_answer_usable(comparison_answer, priorities):
+                has_gemini = bool(getattr(self, "_gemini_model_cache", []))
+                engine_name = "Priority Comparison (Gemini)" if has_gemini else "Priority Comparison (local deterministic)"
                 self._write_trace_event(user_query, comparison_answer, 0.9, False)
                 return {
                     "answer": comparison_answer,
-                    "engine_used": "Priority Comparison (Gemini)",
+                    "engine_used": engine_name,
                     "routing_layer": "SQL+KB",
                     "latency_seconds": round(time.time() - start_time, 3),
                     "sources": [item.get("source") for item in citations],
@@ -1912,6 +2171,9 @@ Admissions Advisor Response:"""
                     "confidence_score": 0.9,
                     "should_abstain": False,
                 }
+
+            if comparison_answer and not self._is_priority_answer_usable(comparison_answer, priorities):
+                print("⚠️ Priority comparison output was low-information. Falling back to deterministic synthesis.")
 
             fallback_answer = self._synthesize_answer(
                 f"{user_query}\nCompare {target_programme or 'the programme'} at {target_baseline} against {target_competitor} using the selected priorities.",

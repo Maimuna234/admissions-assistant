@@ -1,0 +1,1326 @@
+{
+  "priorities_checked": [
+    "Entry Requirements",
+    "Curriculum & Accreditation",
+    "Graduate Outcomes & Salary",
+    "Fees & Cost",
+    "Teaching Quality & NSS",
+    "University Rankings"
+  ],
+  "programme_keyword": "computer science",
+  "priority_summary": {
+    "Entry Requirements": {
+      "count": 13,
+      "below_60": 9,
+      "avg_coverage_pct": 40.0
+    },
+    "Curriculum & Accreditation": {
+      "count": 13,
+      "below_60": 4,
+      "avg_coverage_pct": 74.0
+    },
+    "Graduate Outcomes & Salary": {
+      "count": 13,
+      "below_60": 2,
+      "avg_coverage_pct": 77.9
+    },
+    "Fees & Cost": {
+      "count": 13,
+      "below_60": 13,
+      "avg_coverage_pct": 28.2
+    },
+    "Teaching Quality & NSS": {
+      "count": 13,
+      "below_60": 3,
+      "avg_coverage_pct": 74.7
+    },
+    "University Rankings": {
+      "count": 13,
+      "below_60": 13,
+      "avg_coverage_pct": 0.0
+    }
+  },
+  "rows": [
+    {
+      "university": "Lancaster University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 60.0,
+      "available_fields": 3,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Lancaster University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Lancaster University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 100.0,
+      "available_fields": 8,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 3,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Lancaster University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Lancaster University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 100.0,
+      "available_fields": 7,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Lancaster University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Liverpool John Moores University",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Entry Requirements",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 5,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement",
+        "pct_entrants_alevel",
+        "has_foundation_year"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "Liverpool John Moores University",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 50.0,
+      "available_fields": 4,
+      "required_fields": 8,
+      "sql_fields_present": 0,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "bcs_accredited",
+        "has_placement_year",
+        "has_year_abroad",
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Liverpool John Moores University",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 25.0,
+      "available_fields": 2,
+      "required_fields": 8,
+      "sql_fields_present": 0,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [
+        "median_salary_leo3",
+        "median_salary_leo5",
+        "median_salary_go",
+        "employment_rate_15m",
+        "pct_professional_managerial"
+      ],
+      "kb_missing_fields": [
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "Liverpool John Moores University",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Liverpool John Moores University",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 14.3,
+      "available_fields": 1,
+      "required_fields": 7,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "nss_teaching_satisfaction",
+        "nss_mental_wellbeing",
+        "nss_facilities_resources",
+        "tef_overall_rating",
+        "tef_student_experience"
+      ],
+      "kb_missing_fields": [
+        "student_support"
+      ]
+    },
+    {
+      "university": "Liverpool John Moores University",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Manchester Metropolitan University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 40.0,
+      "available_fields": 2,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "Manchester Metropolitan University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Manchester Metropolitan University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "Manchester Metropolitan University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Manchester Metropolitan University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 85.7,
+      "available_fields": 6,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "student_support"
+      ]
+    },
+    {
+      "university": "Manchester Metropolitan University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Newcastle University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 40.0,
+      "available_fields": 2,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "Newcastle University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Newcastle University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "Newcastle University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Newcastle University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 85.7,
+      "available_fields": 6,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "student_support"
+      ]
+    },
+    {
+      "university": "Newcastle University",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Queen Mary University London",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Entry Requirements",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 5,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement",
+        "pct_entrants_alevel",
+        "has_foundation_year"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "Queen Mary University London",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 50.0,
+      "available_fields": 4,
+      "required_fields": 8,
+      "sql_fields_present": 0,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "bcs_accredited",
+        "has_placement_year",
+        "has_year_abroad",
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Queen Mary University London",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 25.0,
+      "available_fields": 2,
+      "required_fields": 8,
+      "sql_fields_present": 0,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [
+        "median_salary_leo3",
+        "median_salary_leo5",
+        "median_salary_go",
+        "employment_rate_15m",
+        "pct_professional_managerial"
+      ],
+      "kb_missing_fields": [
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "Queen Mary University London",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "Queen Mary University London",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 14.3,
+      "available_fields": 1,
+      "required_fields": 7,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "nss_teaching_satisfaction",
+        "nss_mental_wellbeing",
+        "nss_facilities_resources",
+        "tef_overall_rating",
+        "tef_student_experience"
+      ],
+      "kb_missing_fields": [
+        "student_support"
+      ]
+    },
+    {
+      "university": "Queen Mary University London",
+      "programme_title": "",
+      "programme_matches_keyword": false,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Birmingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 40.0,
+      "available_fields": 2,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "University of Birmingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Birmingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "University of Birmingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Birmingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 85.7,
+      "available_fields": 6,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "student_support"
+      ]
+    },
+    {
+      "university": "University of Birmingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Bristol",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 40.0,
+      "available_fields": 2,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "University of Bristol",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 37.5,
+      "available_fields": 3,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": [
+        "curriculum_year_1",
+        "curriculum_year_2",
+        "curriculum_year_3",
+        "industrial_placements"
+      ]
+    },
+    {
+      "university": "University of Bristol",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 62.5,
+      "available_fields": 5,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "leo_median_salary_3_years",
+        "graduate_in_work_15_months_pct",
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "University of Bristol",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": [
+        "annual_tuition_fee_uk"
+      ]
+    },
+    {
+      "university": "University of Bristol",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 71.4,
+      "available_fields": 5,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "student_support",
+        "infrastructure_and_facilities"
+      ]
+    },
+    {
+      "university": "University of Bristol",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Edinburgh",
+      "programme_title": "Artificial Intelligence and Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 40.0,
+      "available_fields": 2,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "The University of Edinburgh",
+      "programme_title": "Artificial Intelligence and Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 37.5,
+      "available_fields": 3,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": [
+        "curriculum_year_1",
+        "curriculum_year_2",
+        "curriculum_year_3",
+        "industrial_placements"
+      ]
+    },
+    {
+      "university": "The University of Edinburgh",
+      "programme_title": "Artificial Intelligence and Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 62.5,
+      "available_fields": 5,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "leo_median_salary_3_years",
+        "graduate_in_work_15_months_pct",
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "The University of Edinburgh",
+      "programme_title": "Artificial Intelligence and Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": [
+        "annual_tuition_fee_uk"
+      ]
+    },
+    {
+      "university": "The University of Edinburgh",
+      "programme_title": "Artificial Intelligence and Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 42.9,
+      "available_fields": 3,
+      "required_fields": 7,
+      "sql_fields_present": 3,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "tef_overall_rating",
+        "tef_student_experience"
+      ],
+      "kb_missing_fields": [
+        "student_support",
+        "infrastructure_and_facilities"
+      ]
+    },
+    {
+      "university": "The University of Edinburgh",
+      "programme_title": "Artificial Intelligence and Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Leeds",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 60.0,
+      "available_fields": 3,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Leeds",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Leeds",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 100.0,
+      "available_fields": 8,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 3,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Leeds",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Leeds",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 100.0,
+      "available_fields": 7,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Leeds",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Liverpool",
+      "programme_title": "Computer Science and Electronic Engineering",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 60.0,
+      "available_fields": 3,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Liverpool",
+      "programme_title": "Computer Science and Electronic Engineering",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Liverpool",
+      "programme_title": "Computer Science and Electronic Engineering",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 100.0,
+      "available_fields": 8,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 3,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Liverpool",
+      "programme_title": "Computer Science and Electronic Engineering",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Liverpool",
+      "programme_title": "Computer Science and Electronic Engineering",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 100.0,
+      "available_fields": 7,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Liverpool",
+      "programme_title": "Computer Science and Electronic Engineering",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Manchester",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 60.0,
+      "available_fields": 3,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Manchester",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Manchester",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 100.0,
+      "available_fields": 8,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 3,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Manchester",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Manchester",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 100.0,
+      "available_fields": 7,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "The University of Manchester",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Nottingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 40.0,
+      "available_fields": 2,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "University of Nottingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Nottingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "University of Nottingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Nottingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 85.7,
+      "available_fields": 6,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "student_support"
+      ]
+    },
+    {
+      "university": "University of Nottingham",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Sheffield",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Entry Requirements",
+      "coverage_pct": 40.0,
+      "available_fields": 2,
+      "required_fields": 5,
+      "sql_fields_present": 2,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "entry_tariff",
+        "alevel_requirement"
+      ],
+      "kb_missing_fields": [
+        "entry_requirements"
+      ]
+    },
+    {
+      "university": "University of Sheffield",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Curriculum & Accreditation",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 3,
+      "kb_fields_present": 4,
+      "sql_missing_fields": [
+        "final_year_project_credits"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Sheffield",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Graduate Outcomes & Salary",
+      "coverage_pct": 87.5,
+      "available_fields": 7,
+      "required_fields": 8,
+      "sql_fields_present": 5,
+      "kb_fields_present": 2,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "career_outcomes"
+      ]
+    },
+    {
+      "university": "University of Sheffield",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Fees & Cost",
+      "coverage_pct": 33.3,
+      "available_fields": 1,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [
+        "tuition_fee_uk",
+        "tuition_fee_intl"
+      ],
+      "kb_missing_fields": []
+    },
+    {
+      "university": "University of Sheffield",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "Teaching Quality & NSS",
+      "coverage_pct": 85.7,
+      "available_fields": 6,
+      "required_fields": 7,
+      "sql_fields_present": 5,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [],
+      "kb_missing_fields": [
+        "student_support"
+      ]
+    },
+    {
+      "university": "University of Sheffield",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
+      "priority": "University Rankings",
+      "coverage_pct": 0.0,
+      "available_fields": 0,
+      "required_fields": 3,
+      "sql_fields_present": 0,
+      "kb_fields_present": 0,
+      "sql_missing_fields": [
+        "guardian_rank",
+        "cug_rank",
+        "qs_rank"
+      ],
+      "kb_missing_fields": []
+    }
+  ]
+}

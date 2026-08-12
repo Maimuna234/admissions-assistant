@@ -1,0 +1,79 @@
+university,programme_title,programme_matches_keyword,priority,coverage_pct,available_fields,required_fields,sql_fields_present,kb_fields_present,sql_missing_fields,kb_missing_fields
+Lancaster University,Computer Science,True,Entry Requirements,60.0,3,5,2,1,entry_tariff;alevel_requirement,
+Lancaster University,Computer Science,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+Lancaster University,Computer Science,True,Graduate Outcomes & Salary,100.0,8,8,5,3,,
+Lancaster University,Computer Science,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+Lancaster University,Computer Science,True,Teaching Quality & NSS,100.0,7,7,5,2,,
+Lancaster University,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+Liverpool John Moores University,,False,Entry Requirements,0.0,0,5,0,0,entry_tariff;alevel_requirement;pct_entrants_alevel;has_foundation_year,entry_requirements
+Liverpool John Moores University,,False,Curriculum & Accreditation,50.0,4,8,0,4,bcs_accredited;has_placement_year;has_year_abroad;final_year_project_credits,
+Liverpool John Moores University,,False,Graduate Outcomes & Salary,25.0,2,8,0,2,median_salary_leo3;median_salary_leo5;median_salary_go;employment_rate_15m;pct_professional_managerial,career_outcomes
+Liverpool John Moores University,,False,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+Liverpool John Moores University,,False,Teaching Quality & NSS,14.3,1,7,0,1,nss_teaching_satisfaction;nss_mental_wellbeing;nss_facilities_resources;tef_overall_rating;tef_student_experience,student_support
+Liverpool John Moores University,,False,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+Manchester Metropolitan University,Computer Science,True,Entry Requirements,40.0,2,5,2,0,entry_tariff;alevel_requirement,entry_requirements
+Manchester Metropolitan University,Computer Science,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+Manchester Metropolitan University,Computer Science,True,Graduate Outcomes & Salary,87.5,7,8,5,2,,career_outcomes
+Manchester Metropolitan University,Computer Science,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+Manchester Metropolitan University,Computer Science,True,Teaching Quality & NSS,85.7,6,7,5,1,,student_support
+Manchester Metropolitan University,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+Newcastle University,Computer Science,True,Entry Requirements,40.0,2,5,2,0,entry_tariff;alevel_requirement,entry_requirements
+Newcastle University,Computer Science,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+Newcastle University,Computer Science,True,Graduate Outcomes & Salary,87.5,7,8,5,2,,career_outcomes
+Newcastle University,Computer Science,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+Newcastle University,Computer Science,True,Teaching Quality & NSS,85.7,6,7,5,1,,student_support
+Newcastle University,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+Queen Mary University London,,False,Entry Requirements,0.0,0,5,0,0,entry_tariff;alevel_requirement;pct_entrants_alevel;has_foundation_year,entry_requirements
+Queen Mary University London,,False,Curriculum & Accreditation,50.0,4,8,0,4,bcs_accredited;has_placement_year;has_year_abroad;final_year_project_credits,
+Queen Mary University London,,False,Graduate Outcomes & Salary,25.0,2,8,0,2,median_salary_leo3;median_salary_leo5;median_salary_go;employment_rate_15m;pct_professional_managerial,career_outcomes
+Queen Mary University London,,False,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+Queen Mary University London,,False,Teaching Quality & NSS,14.3,1,7,0,1,nss_teaching_satisfaction;nss_mental_wellbeing;nss_facilities_resources;tef_overall_rating;tef_student_experience,student_support
+Queen Mary University London,,False,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+University of Birmingham,Computer Science,True,Entry Requirements,40.0,2,5,2,0,entry_tariff;alevel_requirement,entry_requirements
+University of Birmingham,Computer Science,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+University of Birmingham,Computer Science,True,Graduate Outcomes & Salary,87.5,7,8,5,2,,career_outcomes
+University of Birmingham,Computer Science,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+University of Birmingham,Computer Science,True,Teaching Quality & NSS,85.7,6,7,5,1,,student_support
+University of Birmingham,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+University of Bristol,Computer Science,True,Entry Requirements,40.0,2,5,2,0,entry_tariff;alevel_requirement,entry_requirements
+University of Bristol,Computer Science,True,Curriculum & Accreditation,37.5,3,8,3,0,final_year_project_credits,curriculum_year_1;curriculum_year_2;curriculum_year_3;industrial_placements
+University of Bristol,Computer Science,True,Graduate Outcomes & Salary,62.5,5,8,5,0,,leo_median_salary_3_years;graduate_in_work_15_months_pct;career_outcomes
+University of Bristol,Computer Science,True,Fees & Cost,0.0,0,3,0,0,tuition_fee_uk;tuition_fee_intl,annual_tuition_fee_uk
+University of Bristol,Computer Science,True,Teaching Quality & NSS,71.4,5,7,5,0,,student_support;infrastructure_and_facilities
+University of Bristol,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+The University of Edinburgh,Artificial Intelligence and Computer Science,True,Entry Requirements,40.0,2,5,2,0,entry_tariff;alevel_requirement,entry_requirements
+The University of Edinburgh,Artificial Intelligence and Computer Science,True,Curriculum & Accreditation,37.5,3,8,3,0,final_year_project_credits,curriculum_year_1;curriculum_year_2;curriculum_year_3;industrial_placements
+The University of Edinburgh,Artificial Intelligence and Computer Science,True,Graduate Outcomes & Salary,62.5,5,8,5,0,,leo_median_salary_3_years;graduate_in_work_15_months_pct;career_outcomes
+The University of Edinburgh,Artificial Intelligence and Computer Science,True,Fees & Cost,0.0,0,3,0,0,tuition_fee_uk;tuition_fee_intl,annual_tuition_fee_uk
+The University of Edinburgh,Artificial Intelligence and Computer Science,True,Teaching Quality & NSS,42.9,3,7,3,0,tef_overall_rating;tef_student_experience,student_support;infrastructure_and_facilities
+The University of Edinburgh,Artificial Intelligence and Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+University of Leeds,Computer Science,True,Entry Requirements,60.0,3,5,2,1,entry_tariff;alevel_requirement,
+University of Leeds,Computer Science,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+University of Leeds,Computer Science,True,Graduate Outcomes & Salary,100.0,8,8,5,3,,
+University of Leeds,Computer Science,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+University of Leeds,Computer Science,True,Teaching Quality & NSS,100.0,7,7,5,2,,
+University of Leeds,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+The University of Liverpool,Computer Science and Electronic Engineering,True,Entry Requirements,60.0,3,5,2,1,entry_tariff;alevel_requirement,
+The University of Liverpool,Computer Science and Electronic Engineering,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+The University of Liverpool,Computer Science and Electronic Engineering,True,Graduate Outcomes & Salary,100.0,8,8,5,3,,
+The University of Liverpool,Computer Science and Electronic Engineering,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+The University of Liverpool,Computer Science and Electronic Engineering,True,Teaching Quality & NSS,100.0,7,7,5,2,,
+The University of Liverpool,Computer Science and Electronic Engineering,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+The University of Manchester,Computer Science,True,Entry Requirements,60.0,3,5,2,1,entry_tariff;alevel_requirement,
+The University of Manchester,Computer Science,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+The University of Manchester,Computer Science,True,Graduate Outcomes & Salary,100.0,8,8,5,3,,
+The University of Manchester,Computer Science,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+The University of Manchester,Computer Science,True,Teaching Quality & NSS,100.0,7,7,5,2,,
+The University of Manchester,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+University of Nottingham,Computer Science,True,Entry Requirements,40.0,2,5,2,0,entry_tariff;alevel_requirement,entry_requirements
+University of Nottingham,Computer Science,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+University of Nottingham,Computer Science,True,Graduate Outcomes & Salary,87.5,7,8,5,2,,career_outcomes
+University of Nottingham,Computer Science,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+University of Nottingham,Computer Science,True,Teaching Quality & NSS,85.7,6,7,5,1,,student_support
+University of Nottingham,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,
+University of Sheffield,Computer Science,True,Entry Requirements,40.0,2,5,2,0,entry_tariff;alevel_requirement,entry_requirements
+University of Sheffield,Computer Science,True,Curriculum & Accreditation,87.5,7,8,3,4,final_year_project_credits,
+University of Sheffield,Computer Science,True,Graduate Outcomes & Salary,87.5,7,8,5,2,,career_outcomes
+University of Sheffield,Computer Science,True,Fees & Cost,33.3,1,3,0,1,tuition_fee_uk;tuition_fee_intl,
+University of Sheffield,Computer Science,True,Teaching Quality & NSS,85.7,6,7,5,1,,student_support
+University of Sheffield,Computer Science,True,University Rankings,0.0,0,3,0,0,guardian_rank;cug_rank;qs_rank,

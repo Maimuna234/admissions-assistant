@@ -152,6 +152,80 @@ class GroundingTests(unittest.TestCase):
         self.assertIn("Graduate Outcomes & Salary", repaired)
         self.assertNotIn("Insufficient information", repaired)
 
+    def test_priority_coverage_snapshot_flags_low_coverage_priority(self):
+        baseline_row = {
+            "entry_tariff": 160,
+            "alevel_requirement": "AAA",
+            "pct_entrants_alevel": 72.1,
+            "has_foundation_year": True,
+            "median_salary_leo3": 32000,
+            "employment_rate_15m": 91.0,
+            "_career_text": "Strong employment outcomes.",
+        }
+        competitor_row = {
+            "entry_tariff": 150,
+            "alevel_requirement": "AAB",
+            "pct_entrants_alevel": 68.4,
+            "has_foundation_year": False,
+            "median_salary_leo3": 30000,
+            "employment_rate_15m": 88.2,
+            "_career_text": "Good employability.",
+        }
+
+        snapshot = self.orchestrator._priority_coverage_snapshot(
+            ["Entry Requirements", "Fees & Cost"],
+            baseline_row,
+            competitor_row,
+        )
+
+        by_priority = {item["priority"]: item for item in snapshot}
+        self.assertTrue(by_priority["Entry Requirements"]["usable"])
+        self.assertFalse(by_priority["Fees & Cost"]["usable"])
+        self.assertEqual(by_priority["Fees & Cost"]["baseline_ratio"], 0.0)
+        self.assertEqual(by_priority["Fees & Cost"]["competitor_ratio"], 0.0)
+
+    def test_priority_answer_usability_rejects_low_information_text(self):
+        usable = self.orchestrator._is_priority_answer_usable(
+            "Insufficient information in the provided context to answer this question reliably.",
+            ["Entry Requirements", "Fees & Cost"],
+        )
+
+        self.assertFalse(usable)
+
+        usable_structured = self.orchestrator._is_priority_answer_usable(
+            "## 1. Entry Requirements\nWinner: University of Leeds — higher tariff evidence.\n## OVERALL RECOMMENDATION",
+            ["Entry Requirements", "Fees & Cost"],
+        )
+
+        self.assertTrue(usable_structured)
+
+    def test_build_local_priority_summary_returns_decision_summary(self):
+        baseline_row = {
+            "entry_tariff": 160,
+            "median_salary_leo3": 32000,
+            "tuition_fee_uk": "£9,250/year",
+            "bcs_accredited": True,
+        }
+        competitor_row = {
+            "entry_tariff": 150,
+            "median_salary_leo3": 30000,
+            "tuition_fee_uk": "£9,250/year",
+            "bcs_accredited": False,
+        }
+
+        summary = self.orchestrator._build_local_priority_summary(
+            ["Entry Requirements", "Graduate Outcomes & Salary", "Fees & Cost", "Curriculum & Accreditation"],
+            "University of Liverpool",
+            "Lancaster University",
+            baseline_row,
+            competitor_row,
+        )
+
+        self.assertIn("Decision summary", summary)
+        self.assertIn("Entry Requirements", summary)
+        self.assertIn("Winner", summary)
+        self.assertIn("Overall recommendation", summary)
+
 
 if __name__ == "__main__":
     unittest.main()

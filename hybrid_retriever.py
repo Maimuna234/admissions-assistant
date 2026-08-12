@@ -1,7 +1,11 @@
 import re
-from rank_bm25 import BM25Okapi
 import numpy as np
 from typing import List, Dict, Any
+
+try:
+    from rank_bm25 import BM25Okapi
+except ImportError:  # pragma: no cover - optional dependency fallback
+    BM25Okapi = None
 
 
 class HybridRetriever:
@@ -13,7 +17,7 @@ class HybridRetriever:
         self.metadatas = all_docs["metadatas"]
 
         tokenized_corpus = [doc.lower().split(" ") for doc in self.documents]
-        self.bm25 = BM25Okapi(tokenized_corpus)
+        self.bm25 = BM25Okapi(tokenized_corpus) if BM25Okapi and tokenized_corpus else None
         self.synonym_map = {
             "module": ["module", "modules", "curriculum", "coursework"],
             "year": ["year", "years", "level"],
@@ -89,8 +93,11 @@ class HybridRetriever:
     def search(self, query: str, top_k: int = 5, rrf_k: int = 60, where_clause: Dict = None) -> List[Dict]:
         expanded_terms = self._expand_query(query)
         tokenized_query = expanded_terms
-        bm25_scores = self.bm25.get_scores(tokenized_query)
-        bm25_top_indices = np.argsort(bm25_scores)[::-1][:top_k * 2]
+        bm25_scores = None
+        bm25_top_indices = []
+        if self.bm25 is not None:
+            bm25_scores = self.bm25.get_scores(tokenized_query)
+            bm25_top_indices = np.argsort(bm25_scores)[::-1][:top_k * 2]
 
         vector_results = self.collection.query(
             query_texts=[query],
@@ -114,7 +121,7 @@ class HybridRetriever:
             document_text = self.documents[idx]
             phrase_overlap = self._phrase_overlap_score(query, document_text)
             bm25_component = 0.0
-            if self.bm25 is not None:
+            if self.bm25 is not None and bm25_scores is not None:
                 bm25_component = float(bm25_scores[self.doc_ids.index(d_id)]) if self.doc_ids.index(d_id) < len(bm25_scores) else 0.0
             reranked_results.append({
                 "id": d_id,
