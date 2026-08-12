@@ -2079,22 +2079,6 @@ Admissions Advisor Response:"""
                 + skipped
             )
 
-        comparison_prompt = (
-            f"You are an expert UK university admissions guide tutor.\n\n"
-            f"A student is comparing {programme} at {target_baseline} vs {target_competitor}.\n\n"
-            f"VERIFIED DATA FROM DATABASE (use ONLY this, do not use outside knowledge):\n{context_str}\n\n"
-            f"Write a structured comparison covering EACH priority below.\n"
-            f"For EACH priority use this exact format:\n"
-            f"## [number]. [Priority Name]\n"
-            f"**{target_baseline}:** bullet facts from data\n"
-            f"**{target_competitor}:** bullet facts from data\n"
-            f"**Winner:** [university] — one sentence reason based on data\n\n"
-            f"Priorities:\n{priority_list}\n\n"
-            f"## OVERALL RECOMMENDATION\n"
-            f"End with a | Priority | Best Choice | Reason | markdown table, then 2–3 sentences of tutor advice.\n"
-            f"Write N/A where data is missing. Do not invent facts."
-        )
-
         local_summary = self._build_local_priority_summary(
             usable_priorities,
             target_baseline,
@@ -2108,22 +2092,11 @@ Admissions Advisor Response:"""
         if not gemini_models:
             return local_with_note
 
-        for model_name in gemini_models:
-            try:
-                llm = ChatGoogleGenerativeAI(
-                    model=model_name, temperature=0.1, google_api_key=self.api_key,
-                )
-                chain = ChatPromptTemplate.from_messages([
-                    HumanMessagePromptTemplate.from_template("{prompt}")
-                ]) | llm | StrOutputParser()
-                result = chain.invoke({"prompt": comparison_prompt})
-                if isinstance(result, str) and result.strip():
-                    print(f"\u2705 Priority comparison generated with [{model_name}].")
-                    return result.strip() + coverage_note
-            except Exception as exc:
-                print(f"\u26a0\ufe0f Priority comparison failed with {model_name}: {exc}")
+        rewritten_summary = self._rewrite_structured_summary_with_gemini(user_query, local_with_note)
+        if rewritten_summary:
+            return rewritten_summary
 
-            return local_with_note
+        return local_with_note
 
     def query_pipeline(
         self,
@@ -2156,7 +2129,7 @@ Admissions Advisor Response:"""
             comparison_answer = self._run_priority_comparison(
                 user_query, priorities, target_baseline, target_competitor, target_programme
             )
-            if comparison_answer and self._is_priority_answer_usable(comparison_answer, priorities):
+            if comparison_answer:
                 has_gemini = bool(getattr(self, "_gemini_model_cache", []))
                 engine_name = "Priority Comparison (Gemini)" if has_gemini else "Priority Comparison (local deterministic)"
                 self._write_trace_event(user_query, comparison_answer, 0.9, False)
@@ -2171,32 +2144,6 @@ Admissions Advisor Response:"""
                     "confidence_score": 0.9,
                     "should_abstain": False,
                 }
-
-            if comparison_answer and not self._is_priority_answer_usable(comparison_answer, priorities):
-                print("⚠️ Priority comparison output was low-information. Falling back to deterministic synthesis.")
-
-            fallback_answer = self._synthesize_answer(
-                f"{user_query}\nCompare {target_programme or 'the programme'} at {target_baseline} against {target_competitor} using the selected priorities.",
-                all_cit_docs,
-                priorities=priorities,
-            )
-            fallback_answer = self._repair_insufficient_comparison_answer(
-                fallback_answer,
-                all_cit_docs,
-                priorities=priorities,
-            )
-            self._write_trace_event(user_query, fallback_answer, 0.75, False)
-            return {
-                "answer": fallback_answer,
-                "engine_used": "Local synthesis fallback",
-                "routing_layer": "SQL+KB",
-                "latency_seconds": round(time.time() - start_time, 3),
-                "sources": [item.get("source") for item in citations],
-                "citations": citations,
-                "contexts": [doc.page_content for doc in all_cit_docs],
-                "confidence_score": 0.75,
-                "should_abstain": False,
-            }
 
 
         retrieval_query = user_query
