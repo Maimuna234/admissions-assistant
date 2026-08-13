@@ -75,3 +75,78 @@ Flow:
 ```powershell
 docker compose -f docker-compose.openwebui.yml down
 ```
+
+## Oracle Cloud Deployment (Recommended)
+
+Use this flow to run OpenWebUI as the main interface on Oracle Linux (VM instance).
+
+### 1. Prepare Oracle Linux host
+
+```bash
+sudo dnf update -y
+sudo dnf install -y git curl
+```
+
+Install Docker engine:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+```
+
+Re-login, then verify:
+
+```bash
+docker --version
+docker compose version
+```
+
+### 2. Clone and configure
+
+```bash
+git clone <your-repo-url> admissions-assistant-run
+cd admissions-assistant-run
+cp .env.example .env
+```
+
+Edit `.env` and set:
+
+- `API_AUTH_KEY` to a strong random value
+- `GEMINI_API_KEY` to your Gemini key
+
+### 3. Run the stack
+
+```bash
+docker compose -f docker-compose.openwebui.yml up -d --build
+```
+
+### 4. Open firewall / security list
+
+Allow inbound TCP:
+
+- `3000` for OpenWebUI
+- `8000` only if you want direct API access
+
+Recommended: expose only `3000` publicly and keep `8000` private.
+
+### 5. Validate
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Open in browser:
+
+- `http://<oracle-public-ip>:3000`
+
+### 6. Upgrade workflow
+
+```bash
+git pull
+docker compose -f docker-compose.openwebui.yml up -d --build
+```
+
+### 7. Optional reverse proxy
+
+Place Nginx or Caddy in front of port `3000` for TLS and domain routing.

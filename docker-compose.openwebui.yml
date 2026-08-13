@@ -9,11 +9,10 @@ services:
       - .env
     environment:
       CHROMA_DB_PATH: /app/chroma_db
-      SQL_DB_PATH: /app/university_stats.db
+      SQL_DB_PATH: /app/admissions_structured.db
       API_AUTH_KEY: ${API_AUTH_KEY:-openwebui-local-key}
     volumes:
       - ./chroma_db:/app/chroma_db
-      - ./university_stats.db:/app/university_stats.db
       - ./admissions_structured.db:/app/admissions_structured.db
       - ./review_log.jsonl:/app/review_log.jsonl
       - ./trace_log.jsonl:/app/trace_log.jsonl

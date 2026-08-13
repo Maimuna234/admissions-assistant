@@ -236,15 +236,13 @@ This starts:
 
 See `OPENWEBUI_DEPLOYMENT.md` for full setup instructions.
 
-## Streamlit Community Cloud Deployment
+## Interface Policy
 
-This repository also supports deployment to Streamlit Community Cloud. The app entrypoint is `app.py` and the deployment guide is available in `STREAMLIT_DEPLOYMENT.md`.
+OpenWebUI is the supported main interface for this project in both local testing and production deployments.
 
-### Quick steps
-1. Push the repository to GitHub.
-2. Create a Streamlit Cloud app pointing to `app.py`.
-3. Add your Gemini API key as a Streamlit secret named `GEMINI_API_KEY`.
-4. Deploy.
+- Local testing: run `openwebui_api.py` directly or use `docker-compose.openwebui.yml`
+- Production deployment: use the OpenWebUI stack documented in `OPENWEBUI_DEPLOYMENT.md`
+- Streamlit is not the primary interface for this repository
 
 ---
 

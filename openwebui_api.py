@@ -765,7 +765,7 @@ def _get_rag() -> Any:
 
                 _rag_instance = AdmissionsRAGOrchestrator(
                     db_directory=os.getenv("CHROMA_DB_PATH", "./chroma_db"),
-                    sql_db_path=os.getenv("SQL_DB_PATH", "./university_stats.db"),
+                    sql_db_path=os.getenv("SQL_DB_PATH", "./admissions_structured.db"),
                 )
     return _rag_instance
 
