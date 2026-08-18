@@ -35,6 +35,7 @@ class VectorIndexingPipeline:
             course_code = entry["course_code"]
             references = entry.get("metadata_reference", {})
             source_url = references.get("source_url", "local_knowledge_base")
+            metric_source_url = references.get("metric_source_url", source_url)
             layer_sources = references.get("layer_sources", {})
             
             # Extract and stringify quantitative metrics to create a baseline profile chunk
@@ -57,6 +58,7 @@ class VectorIndexingPipeline:
             # 1. Create a dedicated document chunk for the Quantitative Profile
             meta_metrics = base_metadata.copy()
             meta_metrics["data_layer"] = "quantitative_profile"
+            meta_metrics["source_url"] = metric_source_url
             documents_pool.append(Document(page_content=metrics_text, metadata=meta_metrics))
 
             # 2. Iterate through qualitative content layers to create isolated semantic chunks
