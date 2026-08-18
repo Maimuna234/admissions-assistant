@@ -25,6 +25,7 @@ ENTRY_SOURCES = {
 }
 
 SOURCE_NAME_ALIASES = {"Queen Mary University of London": "Queen Mary University London"}
+DB_NAME_ALIASES = {"University of Liverpool": "The University of Liverpool"}
 
 FEE_SOURCES = {
     "University of Manchester": ("https://www.manchester.ac.uk/study/undergraduate/courses/2027/00560/bsc-computer-science/", "9790", "Not stated", "2026 home fee £9,790 per year; 2027 fees not yet set and expected to increase slightly. Additional compulsory costs above 1% of the annual home fee should be disclosed.",),
@@ -65,15 +66,17 @@ def update_database(rows):
     for row in rows:
         university = row["University"]
         source_key = SOURCE_NAME_ALIASES.get(university, university)
+        db_university = DB_NAME_ALIASES.get(university, university)
         entry_url, _ = ENTRY_SOURCES[source_key]
         fee_url, home_fee, international_fee, _ = FEE_SOURCES[source_key]
         course_url, _ = COURSE_SOURCES[source_key]
         values = (row["CUG 2026 - Computer Science (Main Comparison)"], row["CUG 2026 - Overall (UK)"], row["QS World Ranking 2026"], row["Ranking Source URL (Verification)"], entry_url)
-        cursor.execute("UPDATE course_facts SET cug_subject_rank_2026=?, cug_overall_rank_2026=?, qs_rank_2026=?, ranking_source_url_2026=?, entry_source_url_2026=? WHERE university=?", (*values, university))
+        cursor.execute("UPDATE course_facts SET cug_subject_rank_2026=?, cug_overall_rank_2026=?, qs_rank_2026=?, ranking_source_url_2026=?, entry_source_url_2026=? WHERE university=?", (*values, db_university))
         if cursor.rowcount == 0:
-            cursor.execute("INSERT INTO course_facts (university, course_title, ucas_code, cug_subject_rank_2026, cug_overall_rank_2026, qs_rank_2026, ranking_source_url_2026, entry_source_url_2026, home_fee_2026, international_fee_2026, fee_source_url_2026, course_source_url_2026) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (university, "Computer Science", "G400", *values, home_fee, international_fee, fee_url, course_url))
-        cursor.execute("UPDATE course_facts SET cug_rank=?, qs_rank=? WHERE university=?", (values[0], values[2], university))
-        cursor.execute("UPDATE course_facts SET tuition_fee_uk=?, tuition_fee_intl=?, home_fee_2026=?, international_fee_2026=?, fee_source_url_2026=?, course_source_url_2026=? WHERE university=? AND lower(course_title) LIKE '%computer science%'", (home_fee, international_fee, home_fee, international_fee, fee_url, course_url, university))
+            cursor.execute("INSERT INTO course_facts (university, course_title, ucas_code, cug_subject_rank_2026, cug_overall_rank_2026, qs_rank_2026, ranking_source_url_2026, entry_source_url_2026, home_fee_2026, international_fee_2026, fee_source_url_2026, course_source_url_2026) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (db_university, "Computer Science", "G400", *values, home_fee, international_fee, fee_url, course_url))
+        cursor.execute("UPDATE course_facts SET cug_rank=?, qs_rank=? WHERE university=?", (values[0], values[2], db_university))
+        cursor.execute("UPDATE course_facts SET tuition_fee_uk=?, tuition_fee_intl=?, home_fee_2026=?, international_fee_2026=?, fee_source_url_2026=?, course_source_url_2026=? WHERE university=? AND lower(course_title) LIKE '%computer science%'", (home_fee, international_fee, home_fee, international_fee, fee_url, course_url, db_university))
+    cursor.execute("DELETE FROM course_facts WHERE university='University of Liverpool' AND course_title='Computer Science' AND ucas_code='G400'")
     connection.commit()
     connection.close()
 

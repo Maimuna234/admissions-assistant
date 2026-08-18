@@ -539,6 +539,15 @@ class QueryRouter:
                 "guardian_rank",
                 "cug_rank",
                 "qs_rank",
+                "cug_subject_rank_2026",
+                "cug_overall_rank_2026",
+                "qs_rank_2026",
+                "ranking_source_url_2026",
+                "entry_source_url_2026",
+                "home_fee_2026",
+                "international_fee_2026",
+                "fee_source_url_2026",
+                "course_source_url_2026",
                 "nss_teaching_satisfaction",
                 "nss_facilities_resources",
                 "nss_mental_wellbeing",
@@ -664,8 +673,9 @@ Admissions Advisor Response:"""
 
     @staticmethod
     def _uni_key(name: str) -> str:
-        """Normalise a university name for fuzzy comparison (strip 'The ', lowercase, strip)."""
-        return re.sub(r"^the\s+", "", str(name or "").lower().strip())
+        """Normalise university naming variants used by the UI, DB, and KB."""
+        normalized = re.sub(r"^the\s+", "", str(name or "").lower().strip())
+        return re.sub(r"\s+of\s+", " ", normalized)
 
     def _ensure_gemini_models(self):
         if self.gemini_models is None:
@@ -1489,6 +1499,70 @@ Admissions Advisor Response:"""
             })
         return citations
 
+    def _priority_citation_docs(self, sql_docs, kb_docs, priorities):
+        """Select evidence documents and URLs that match the requested priorities."""
+        labels = {str(priority).split("(")[0].strip().lower() for priority in priorities or []}
+        selected = []
+        selected_keys = set()
+
+        def add_doc(content, metadata):
+            source = metadata.get("source_url", "")
+            key = (source, metadata.get("data_layer", ""), content[:160])
+            if source and key not in selected_keys:
+                selected_keys.add(key)
+                selected.append(Document(page_content=content, metadata=metadata))
+
+        sql_rows = []
+        for doc in sql_docs:
+            content = str(getattr(doc, "page_content", "") or "")
+            if "Structured Database Results:" not in content:
+                continue
+            try:
+                sql_rows.extend(json.loads(content.split("Structured Database Results:", 1)[1].strip()))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+
+        for row in sql_rows:
+            university = str(row.get("university") or "")
+            if not university:
+                continue
+            if any("rank" in label for label in labels):
+                add_doc(
+                    f"{university} 2026 ranking evidence: CUG Computer Science rank {row.get('cug_subject_rank_2026')}; CUG Overall UK rank {row.get('cug_overall_rank_2026')}; QS World Ranking {row.get('qs_rank_2026')}.",
+                    {"source_url": row.get("ranking_source_url_2026", ""), "data_layer": "rankings_2026", "institution": university},
+                )
+            if any("fee" in label or "cost" in label for label in labels):
+                add_doc(
+                    f"{university} 2026 fee evidence: home fee {row.get('home_fee_2026')}; international fee {row.get('international_fee_2026')}.",
+                    {"source_url": row.get("fee_source_url_2026", ""), "data_layer": "fees_2026", "institution": university},
+                )
+            if any("curriculum" in label or "accredit" in label for label in labels):
+                add_doc(
+                    f"{university} 2026 course and module evidence.",
+                    {"source_url": row.get("course_source_url_2026", ""), "data_layer": "course_data_2026", "institution": university},
+                )
+            if any("entry" in label for label in labels):
+                add_doc(
+                    f"{university} 2026 entry-requirement evidence: {row.get('alevel_requirement') or 'See verified course evidence.'}",
+                    {"source_url": row.get("entry_source_url_2026", ""), "data_layer": "entry_requirements_2026", "institution": university},
+                )
+
+        requested_layers = set()
+        if any("rank" in label for label in labels):
+            requested_layers.add("rankings_2026")
+        if any("fee" in label or "cost" in label for label in labels):
+            requested_layers.add("fees_2026")
+        if any("curriculum" in label or "accredit" in label for label in labels):
+            requested_layers.add("course_data_2026")
+        if any("entry" in label for label in labels):
+            requested_layers.add("entry_requirements_2026")
+
+        for doc in kb_docs:
+            layer = str((getattr(doc, "metadata", {}) or {}).get("data_layer") or "")
+            if layer in requested_layers:
+                add_doc(doc.page_content, dict(getattr(doc, "metadata", {}) or {}))
+        return selected
+
     def _collect_matched_institutions(self, docs):
         matched_institutions = set()
         for doc in docs:
@@ -1650,8 +1724,8 @@ Admissions Advisor Response:"""
         elif "rank" in p:
             checks = [
                 ("guardian_rank", ["guardian_rank"]),
-                ("cug_rank", ["cug_rank"]),
-                ("qs_rank", ["qs_rank"]),
+                ("cug_rank", ["cug_subject_rank_2026", "cug_rank"]),
+                ("qs_rank", ["qs_rank_2026", "qs_rank"]),
             ]
 
         if not checks:
@@ -1750,12 +1824,20 @@ Admissions Advisor Response:"""
             if "entry" in low:
                 b_tariff = self._to_float(baseline_row.get("entry_tariff"))
                 c_tariff = self._to_float(competitor_row.get("entry_tariff"))
-                baseline_value = f"{b_tariff:.0f} UCAS pts" if b_tariff is not None else "N/A"
-                competitor_value = f"{c_tariff:.0f} UCAS pts" if c_tariff is not None else "N/A"
+                b_entry = baseline_row.get("alevel_requirement")
+                c_entry = competitor_row.get("alevel_requirement")
+                if not self._is_value_present(b_entry):
+                    b_entry = baseline_row.get("_entry_text")
+                if not self._is_value_present(c_entry):
+                    c_entry = competitor_row.get("_entry_text")
+                baseline_value = f"{b_tariff:.0f} UCAS pts; {str(b_entry)[:220]}" if b_tariff is not None else (str(b_entry)[:260] if b_entry else "N/A")
+                competitor_value = f"{c_tariff:.0f} UCAS pts; {str(c_entry)[:220]}" if c_tariff is not None else (str(c_entry)[:260] if c_entry else "N/A")
                 if b_tariff is not None and c_tariff is not None:
                     winner = baseline_name if b_tariff >= c_tariff else competitor_name
                     wins[winner] += 1
                     line = _pair_line(p, baseline_value, competitor_value, winner, "Higher tariff is treated as stronger entry evidence.")
+                elif b_entry and c_entry:
+                    line = _pair_line(p, baseline_value, competitor_value, None, "A-level and supporting qualification requirements are shown; no comparable UCAS tariff was supplied.")
                 else:
                     line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both tariff values.")
 
@@ -1796,14 +1878,20 @@ Admissions Advisor Response:"""
                     line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both NSS teaching values.")
 
             elif "rank" in low:
-                b_rank = self._to_float(baseline_row.get("guardian_rank"))
-                c_rank = self._to_float(competitor_row.get("guardian_rank"))
-                baseline_value = f"#{b_rank:.0f}" if b_rank is not None else "N/A"
-                competitor_value = f"#{c_rank:.0f}" if c_rank is not None else "N/A"
+                b_rank = self._to_float(baseline_row.get("cug_subject_rank_2026"))
+                c_rank = self._to_float(competitor_row.get("cug_subject_rank_2026"))
+                if b_rank is None:
+                    b_rank = self._to_float(baseline_row.get("cug_rank"))
+                if c_rank is None:
+                    c_rank = self._to_float(competitor_row.get("cug_rank"))
+                b_qs = self._to_float(baseline_row.get("qs_rank_2026"))
+                c_qs = self._to_float(competitor_row.get("qs_rank_2026"))
+                baseline_value = f"CUG CS #{b_rank:.0f}, QS #{b_qs:.0f}" if b_rank is not None and b_qs is not None else (f"CUG CS #{b_rank:.0f}" if b_rank is not None else "N/A")
+                competitor_value = f"CUG CS #{c_rank:.0f}, QS #{c_qs:.0f}" if c_rank is not None and c_qs is not None else (f"CUG CS #{c_rank:.0f}" if c_rank is not None else "N/A")
                 if b_rank is not None and c_rank is not None:
                     winner = baseline_name if b_rank <= c_rank else competitor_name
                     wins[winner] += 1
-                    line = _pair_line(p, baseline_value, competitor_value, winner, "Lower rank is treated as stronger ranking evidence.")
+                    line = _pair_line(p, baseline_value, competitor_value, winner, "Lower CUG Computer Science rank is treated as stronger ranking evidence; QS values are shown for context.")
                 else:
                     line = _pair_line(p, baseline_value, competitor_value, None, "The current evidence does not provide both ranking values.")
 
@@ -1907,7 +1995,7 @@ Admissions Advisor Response:"""
 
         # ── Supplement missing/placeholder fields from KB ─────────────────────
         PLACEHOLDER_VALUES = {None, "Needs verification", "Not published centrally", "Not found", ""}
-        kb_entries = self.knowledge_base_retriever._entries or []
+        kb_entries = self.knowledge_base_retriever._entries
         if kb_entries is None:
             kb_entries = self.knowledge_base_retriever._load_entries()
 
@@ -1937,7 +2025,7 @@ Admissions Advisor Response:"""
                     row["employment_rate_15m"] = float(emp)
 
             # Qualitative text layers
-            row["_entry_text"] = layers.get("entry_requirements", "")
+            row["_entry_text"] = layers.get("entry_requirements_2026", layers.get("entry_requirements", ""))
             row["_curriculum_text"] = " | ".join(filter(None, [
                 layers.get("curriculum_year_1",""),
                 layers.get("curriculum_year_2",""),
@@ -2082,8 +2170,14 @@ Admissions Advisor Response:"""
             elif "rank" in p:
                 for parts, row in [(b, baseline_row), (c, competitor_row)]:
                     parts.append(f"Guardian rank: {_v(row, 'guardian_rank', prefix='#') if row.get('guardian_rank') else 'N/A'}")
-                    parts.append(f"CUG rank: {_v(row, 'cug_rank', prefix='#') if row.get('cug_rank') else 'N/A'}")
-                    parts.append(f"QS world rank: {_v(row, 'qs_rank', prefix='#') if row.get('qs_rank') else 'N/A'}")
+                    cug_key = 'cug_subject_rank_2026' if row.get('cug_subject_rank_2026') is not None else 'cug_rank'
+                    qs_key = 'qs_rank_2026' if row.get('qs_rank_2026') is not None else 'qs_rank'
+                    cug_label = "CUG Computer Science 2026 rank" if cug_key == 'cug_subject_rank_2026' else "CUG rank"
+                    qs_label = "QS World Ranking 2026" if qs_key == 'qs_rank_2026' else "QS world rank"
+                    parts.append(f"{cug_label}: {_v(row, cug_key, prefix='#') if row.get(cug_key) else 'N/A'}")
+                    if row.get('cug_overall_rank_2026') is not None:
+                        parts.append(f"CUG Overall UK 2026 rank: {_v(row, 'cug_overall_rank_2026', prefix='#')}")
+                    parts.append(f"{qs_label}: {_v(row, qs_key, prefix='#') if row.get(qs_key) else 'N/A'}")
 
             if b or c:
                 label = str(priority).split("(")[0].strip()
@@ -2147,6 +2241,9 @@ Admissions Advisor Response:"""
                 allowed_institutions=[target_baseline, target_competitor],
             )
             all_cit_docs = sql_docs_cit + kb_docs_cit
+            priority_cit_docs = self._priority_citation_docs(sql_docs_cit, kb_docs_cit, priorities)
+            if priority_cit_docs:
+                all_cit_docs = priority_cit_docs
             citations = self._build_citations(all_cit_docs)
 
             comparison_answer = self._run_priority_comparison(
