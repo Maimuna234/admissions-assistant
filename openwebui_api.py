@@ -15,7 +15,7 @@ from pydantic import BaseModel
 APP_TITLE = "Admissions Assistant API"
 APP_VERSION = "1.0.0"
 MODEL_ID = "admissions-rag"
-UI_TITLE = "Admissions Assistant MVP"
+UI_TITLE = "Admissions Assistant"
 BASELINE_UNIVERSITY = "University of Liverpool"
 BASELINE_PROGRAMME = "Computer Science BSc"
 
@@ -266,6 +266,26 @@ def _render_ui_html() -> str:
             font-size: 15px;
         }}
         .answer-card .muted {{ color: var(--muted); }}
+        .summary-content {{ display: grid; gap: 12px; }}
+        .summary-intro {{ margin: 0 0 2px; font-weight: 700; color: var(--accent-strong); }}
+        .priority-section {{
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.72);
+            padding: 12px 14px;
+        }}
+        .priority-heading {{ margin: 0 0 6px; font-size: 16px; color: var(--accent-strong); }}
+        .priority-detail {{ margin: 0; white-space: normal; }}
+        .priority-winner {{ margin: 8px 0 0; font-weight: 700; color: var(--ink); }}
+        .priority-reason {{ margin: 4px 0 0; color: var(--muted); font-size: 14px; }}
+        .recommendation {{
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            background: var(--accent-soft);
+            padding: 14px;
+            font-weight: 700;
+        }}
+        .recommendation-heading {{ margin: 0 0 4px; font-size: 16px; color: var(--accent-strong); }}
         .citations {{ display: grid; gap: 10px; margin-top: 10px; }}
         .citation {{
             padding: 12px 0;
@@ -478,6 +498,49 @@ def _render_ui_html() -> str:
             return escaped.replace(/\[(\d+)\]/g, (_, n) => `<a class="summary-link" href="#" onclick="openCitationByNumber(${{Number(n)}}); return false;">[${{n}}]</a>`);
         }}
 
+        function formatComparisonSummary(answer) {{
+            const raw = String(answer || '').replace(/\\r?\\n/g, ' ').trim();
+            if (!raw) return '<div class="muted">No answer returned.</div>';
+
+            let body = raw.replace(/^Decision summary:\s*/i, '');
+            let recommendation = '';
+            const recommendationMatch = body.match(/Overall recommendation:\s*(.*?)(?=\s*\[\d+\]|$)/i);
+            if (recommendationMatch) {{
+                recommendation = recommendationMatch[1].trim().replace(/[.]+$/, '');
+                body = body.slice(0, recommendationMatch.index).replace(/[|\s]+$/, '').trim();
+            }}
+
+            const sections = body.split(/\s*\|\s*/).filter(Boolean);
+            const rendered = sections.map((section) => {{
+                const match = section.match(/^([^:]+):\s*(.*)$/);
+                if (!match) return `<p class="priority-detail">${{linkSummaryCitations(section)}}</p>`;
+
+                const heading = match[1].trim();
+                let detail = match[2].trim();
+                let winner = '';
+                let reason = '';
+                const winnerMatch = detail.match(/\s*Winner:\s*(.*?)(?=\.\s*(?:Higher|Lower|Both|A-level|The current|$))/i);
+                if (winnerMatch) {{
+                    winner = winnerMatch[1].trim();
+                    detail = detail.slice(0, winnerMatch.index).trim();
+                    const remainder = match[2].slice(winnerMatch.index + winnerMatch[0].length).trim();
+                    reason = remainder.replace(/^\.\s*/, '').trim();
+                }}
+
+                return `<section class="priority-section">
+                    <h4 class="priority-heading">${{escapeHtml(heading)}}</h4>
+                    <p class="priority-detail">${{linkSummaryCitations(detail)}}</p>
+                    ${{winner ? `<p class="priority-winner">Winner: ${{linkSummaryCitations(winner)}}</p>` : ''}}
+                    ${{reason ? `<p class="priority-reason">${{linkSummaryCitations(reason)}}</p>` : ''}}
+                </section>`;
+            }}).join('');
+
+            const recommendationHtml = recommendation
+                ? `<section class="recommendation"><h4 class="recommendation-heading">Overall Recommendation</h4><div>${{linkSummaryCitations(recommendation)}}</div></section>`
+                : '';
+            return `<div class="summary-content">${{rendered}}${{recommendationHtml}}</div>`;
+        }}
+
         function openCitationByNumber(number) {{
             const item = (state.citations || [])[number - 1];
             if (!item) return;
@@ -517,7 +580,7 @@ def _render_ui_html() -> str:
         function setSummaryText(result) {{
             const response = document.getElementById('response');
             const answer = result.answer || 'No answer returned.';
-            response.innerHTML = linkSummaryCitations(answer);
+            response.innerHTML = formatComparisonSummary(answer);
             renderCitations(result);
         }}
 
