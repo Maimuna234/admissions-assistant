@@ -33,7 +33,9 @@ class VectorIndexingPipeline:
         for entry in kb_data:
             uni_name = entry["university_name"]
             course_code = entry["course_code"]
-            source_url = entry["metadata_reference"]["source_url"]
+            references = entry.get("metadata_reference", {})
+            source_url = references.get("source_url", "local_knowledge_base")
+            layer_sources = references.get("layer_sources", {})
             
             # Extract and stringify quantitative metrics to create a baseline profile chunk
             metrics = entry["metrics"]
@@ -69,6 +71,7 @@ class VectorIndexingPipeline:
                 # Update metadata specifying the exact data layer type (SRS Requirement FR-2.3)
                 meta_layer = base_metadata.copy()
                 meta_layer["data_layer"] = layer_name
+                meta_layer["source_url"] = layer_sources.get(layer_name, source_url)
                 
                 documents_pool.append(Document(page_content=chunk_text, metadata=meta_layer))
 
