@@ -1,0 +1,11 @@
+{
+  "title": "Admissions Assistant",
+  "description": "AI-powered competitive intelligence dashboard for University of Liverpool Admissions Tutors. Compare Computer Science programmes against rival UK institutions in real time.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

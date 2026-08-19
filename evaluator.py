@@ -63,11 +63,33 @@ load_dotenv()
 
 
 class RAGEvaluator:
-    def __init__(self):
+    def __init__(self, golden_dataset_path: str = "golden_dataset.csv"):
         print("⚙️ Initializing RAG Evaluator...")
         self.rag_system = _AdmissionsRAGOrchestrator()
+        self.golden_dataset_path = golden_dataset_path
 
-        self.evaluation_set = [
+        loaded_set = self._load_golden_dataset(golden_dataset_path)
+        self.evaluation_set = loaded_set if loaded_set else self._default_evaluation_set()
+
+    def _load_golden_dataset(self, path: str) -> List[dict]:
+        """Loads evaluation questions/ground truths from golden_dataset.csv when available."""
+        if not path or not os.path.exists(path):
+            return []
+        rows = []
+        with open(path, newline="", encoding="utf-8-sig") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                question = (row.get("Question") or "").strip()
+                ground_truth = (row.get("GroundTruth") or "").strip()
+                if not question:
+                    continue
+                rows.append({"question": question, "ground_truth": ground_truth})
+        if rows:
+            print(f"📄 Loaded {len(rows)} evaluation cases from {path}")
+        return rows
+
+    def _default_evaluation_set(self) -> List[dict]:
+        return [
             {
                 "question": "What is the UCAS code for the Computer Science BSc?",
                 "ground_truth": "The UCAS codes are CS303 for Leeds, CS606 for Sheffield, and CS505 for Nottingham."

@@ -3,13 +3,17 @@ import json
 import time
 import uuid
 import sys
+import sqlite3
 import threading
 from typing import Any, Dict, Iterator, List, Optional
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
+
+import admin_kb
+import auth_db
 
 
 APP_TITLE = "Admissions Assistant API"
@@ -72,110 +76,127 @@ def _render_ui_html() -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{UI_TITLE}</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
         :root {{
-            --paper: #d8dfdc;
-            --paper-deep: #c3ccc8;
-            --ink: #1d2628;
-            --soft: #f3f5f3;
-            --rule: rgba(29, 38, 40, 0.74);
-            --muted: rgba(29, 38, 40, 0.58);
-            --shadow: rgba(9, 14, 16, 0.22);
-            --accent: #4a6257;
-            --accent-strong: #34473f;
-            --accent-soft: #cfd8d3;
-            --highlight: #87988b;
+            --paper: #F9F8F4;
+            --paper-deep: #EAE8E0;
+            --ink: #2A2A27;
+            --soft: #F2F0E8;
+            --rule: #DDD9CE;
+            --muted: #7A7A72;
+            --shadow: rgba(42, 42, 39, 0.10);
+            --accent: #00205B;
+            --accent-strong: #00205B;
+            --accent-soft: rgba(0, 32, 91, 0.10);
+            --uol-red: #E31C3D;
         }}
         * {{ box-sizing: border-box; }}
         body {{
             margin: 0;
-            font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
-            background:
-                radial-gradient(circle at top left, rgba(255,255,255,0.58), transparent 22%),
-                radial-gradient(circle at right 20%, rgba(74,98,87,0.06), transparent 22%),
-                linear-gradient(180deg, #dde3e0 0%, #c5ceca 100%);
+            font-family: 'Source Sans 3', system-ui, sans-serif;
+            background: var(--paper);
             color: var(--ink);
             min-height: 100vh;
             line-height: 1.45;
+            font-size: 14px;
         }}
         .frame {{
             max-width: 1340px;
-            margin: 26px auto;
-            padding: 12px;
+            margin: 0 auto;
+            padding: 0;
         }}
         .board {{
             position: relative;
-            border: 3px solid var(--rule);
-            border-radius: 18px;
-            background:
-                linear-gradient(135deg, rgba(74,98,87,0.05), transparent 34%),
-                linear-gradient(180deg, #f6f8f5 0%, #e8edea 100%);
-            box-shadow: 0 28px 70px var(--shadow);
-            padding: 18px;
+            background: transparent;
+            padding: 0;
         }}
-        .board::before, .board::after {{
-            content: "";
-            position: absolute;
-            inset: 7px;
-            border: 1px solid rgba(74, 98, 87, 0.12);
-            border-radius: 13px;
-            pointer-events: none;
-        }}
+        .board-stripe {{ height: 4px; background: var(--uol-red); }}
+        .board::before, .board::after {{ content: none; }}
         .title-row {{
-            display: grid;
-            grid-template-columns: 1.1fr 2.1fr 0.9fr;
-            gap: 18px;
-            margin-bottom: 20px;
-            align-items: end;
-            padding: 6px 6px 18px;
-            border-bottom: 1px solid rgba(74, 98, 87, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin: 0;
+            padding: 14px 20px;
+            background: var(--accent-strong);
         }}
         .title {{
             text-align: left;
-            font-size: 28px;
-            letter-spacing: 0.04em;
+            font-family: 'Lora', Georgia, serif;
+            font-size: 15px;
+            letter-spacing: 0.02em;
             font-weight: 700;
-            margin: 0 0 4px;
-            color: #2a3537;
+            margin: 0;
+            color: #FFFFFF;
             text-transform: uppercase;
+            line-height: 1.25;
         }}
         .subtitle {{
-            margin: 0;
+            margin: 2px 0 0;
             color: var(--muted);
-            font-size: 13px;
+            font-size: 12px;
         }}
+        .title-brand {{ display: flex; align-items: center; gap: 10px; }}
+        .brand-mark {{ color: #FFFFFF; flex-shrink: 0; }}
+        .header-actions {{ display: flex; align-items: center; gap: 8px; }}
+        .icon-button {{
+            width: 28px; height: 28px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 0; background: transparent; color: rgba(255,255,255,0.85);
+            cursor: pointer; padding: 0;
+        }}
+        .icon-button:hover {{ background: rgba(255,255,255,0.12); }}
+        .user-chip {{
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9);
+        }}
+        .status-badge {{
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #FFFFFF;
+            background: rgba(255,255,255,0.15);
+            border-radius: 999px;
+            padding: 4px 10px;
+        }}
+        .status-badge .dot {{ width: 6px; height: 6px; border-radius: 50%; background: #FFFFFF; }}
         .layout {{
             display: grid;
-            grid-template-columns: 0.95fr 1.65fr 0.8fr;
-            gap: 20px;
+            grid-template-columns: 1fr;
+            gap: 16px;
             min-height: 72vh;
+            padding: 16px 20px 20px;
+        }}
+        .citations-col {{ grid-column: 1 / -1; }}
+        @media (min-width: 760px) {{
+            .layout {{ grid-template-columns: 1fr 1fr; }}
+        }}
+        @media (min-width: 1100px) {{
+            .layout {{ grid-template-columns: 0.95fr 1.65fr 0.8fr; }}
+            .citations-col {{ grid-column: auto; }}
         }}
         .pane {{
             position: relative;
-            border: 2.5px solid var(--rule);
-            border-radius: 18px;
-            background:
-                linear-gradient(180deg, rgba(255,255,255,0.84), rgba(243,245,243,0.94)),
-                var(--soft);
-            padding: 20px 18px;
+            border: 1px solid var(--rule);
+            border-radius: 6px;
+            background: #FFFFFF;
+            padding: 16px;
             overflow: hidden;
         }}
-        .pane::after {{
-            content: "";
-            position: absolute;
-            inset: 6px;
-            border: 1px solid rgba(74, 98, 87, 0.10);
-            border-radius: 10px;
-            pointer-events: none;
-        }}
+        .pane::after {{ content: none; }}
         .section-title {{
-            margin: 0 0 18px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(74, 98, 87, 0.12);
-            font-size: 18px;
-            font-weight: 700;
-            color: #2a3537;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+            margin: 0 0 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--rule);
+            font-family: 'Lora', Georgia, serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: 0;
+            text-transform: none;
         }}
         .label {{
             display: block;
@@ -187,124 +208,133 @@ def _render_ui_html() -> str:
         }}
         .field, .textarea, .select {{
             width: 100%;
-            border: 2px solid var(--rule);
-            border-radius: 10px;
-            background: #fffefc;
+            border: 1px solid var(--rule);
+            border-radius: 4px;
+            background: #FFFFFF;
             color: var(--ink);
-            padding: 10px 12px;
+            padding: 8px 10px;
             font: inherit;
+            font-size: 13px;
             outline: none;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
         }}
-        .field:focus, .textarea:focus, .select:focus {{ border-color: var(--accent); box-shadow: 0 0 0 3px rgba(74,98,87,0.10); }}
-        .field, .select {{ height: 43px; }}
-        .textarea {{ min-height: 170px; resize: vertical; line-height: 1.65; }}
-        .stack {{ display: grid; gap: 18px; }}
-        .control-group {{ margin-bottom: 22px; }}
-        .checkboxes {{ display: grid; gap: 10px; margin-top: 8px; }}
-        .checkboxes label {{ display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 1.4; }}
-        .checkboxes input {{ width: 17px; height: 17px; accent-color: var(--accent); }}
+        .field:focus, .textarea:focus, .select:focus {{ border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }}
+        .field, .select {{ height: 36px; }}
+        .field[readonly] {{ background: var(--soft); color: var(--muted); }}
+        .textarea {{ min-height: 110px; resize: vertical; line-height: 1.55; }}
+        .stack {{ display: grid; gap: 14px; }}
+        .control-group {{ margin-bottom: 16px; }}
+        .checkboxes {{ display: grid; gap: 8px; margin-top: 6px; }}
+        .checkboxes label {{ display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.4; cursor: pointer; }}
+        .checkboxes input {{ width: 15px; height: 15px; accent-color: var(--accent); }}
         .dropdown-arrow {{
             position: relative;
         }}
         .dropdown-arrow::after {{
             content: "▼";
             position: absolute;
-            right: 14px;
-            top: 38px;
-            font-size: 10px;
+            right: 12px;
+            top: 32px;
+            font-size: 9px;
+            color: var(--muted);
             pointer-events: none;
         }}
-        .button-row {{ display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }}
+        .button-row {{ display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }}
         .button {{
-            border: 2px solid var(--rule);
-            border-radius: 999px;
-            background: linear-gradient(180deg, #f8faf7 0%, #e4eae7 100%);
+            border: 1px solid var(--rule);
+            border-radius: 4px;
+            background: #FFFFFF;
             color: var(--ink);
-            padding: 11px 18px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            font-size: 12px;
+            padding: 9px 16px;
+            font-weight: 600;
+            letter-spacing: 0;
+            text-transform: none;
+            font-size: 13px;
             cursor: pointer;
-            box-shadow: 0 6px 16px rgba(10, 26, 34, 0.08);
         }}
-        .button.primary {{ background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%); color: #f6fffb; border-color: var(--accent-strong); }}
-        .button:hover {{ transform: translateY(-1px); filter: brightness(1.01); }}
-        .summary-box {{
-            border: 2px solid var(--rule);
-            border-radius: 16px;
-            background: linear-gradient(180deg, #f8faf8 0%, #eaefec 100%);
-            padding: 18px 18px 16px;
-            box-shadow: inset 0 0 0 1px rgba(74, 98, 87, 0.06);
-            min-height: 142px;
-        }}
-        .summary-box h3 {{ margin: 0 0 14px; font-size: 15px; color: #2a3537; letter-spacing: 0.06em; text-transform: uppercase; }}
-        .summary-list {{ margin: 0; padding-left: 22px; display: grid; gap: 9px; }}
-        .summary-list li {{ line-height: 1.45; }}
-        .chat-meta {{ display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; font-size: 13px; color: var(--muted); }}
-        .tag {{
-            border: 1px solid rgba(31, 26, 22, 0.22);
-            border-radius: 999px;
-            padding: 6px 10px;
-            background: rgba(255,255,255,0.55);
-        }}
+        .button.primary {{ background: var(--accent-strong); color: #F9F8F4; border-color: var(--accent-strong); }}
+        .button:hover {{ filter: brightness(0.97); }}
+        .button:disabled {{ opacity: 0.55; cursor: not-allowed; }}
         .conversation {{
-            min-height: 320px;
+            min-height: 260px;
             padding: 0;
             background: transparent;
             border: 0;
         }}
         .answer-card {{
-            border: 2px solid var(--rule);
-            border-radius: 16px;
-            background: linear-gradient(180deg, #f8faf8 0%, #e8eeea 100%);
-            padding: 18px;
-            min-height: 210px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            padding: 0;
+            min-height: 160px;
             white-space: pre-wrap;
-            line-height: 1.72;
-            font-size: 15px;
+            line-height: 1.5;
+            font-size: 13px;
         }}
+        .summary-box {{ padding: 0; background: transparent; border: 0; }}
         .answer-card .muted {{ color: var(--muted); }}
-        .summary-content {{ display: grid; gap: 12px; }}
-        .summary-intro {{ margin: 0 0 2px; font-weight: 700; color: var(--accent-strong); }}
+        .empty-state {{ display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 12px; color: var(--muted); }}
+        .empty-state strong {{ display: block; color: var(--ink); font-weight: 600; margin-bottom: 4px; font-size: 13px; }}
+        .loading-state {{ display: grid; gap: 10px; }}
+        .loading-row {{ display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); font-weight: 600; }}
+        .spinner {{ width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--rule); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }}
+        @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+        .skeleton-row {{ height: 42px; border-radius: 4px; background: linear-gradient(90deg, var(--soft) 25%, var(--paper-deep) 50%, var(--soft) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }}
+        @keyframes shimmer {{ 0% {{ background-position: -200% 0; }} 100% {{ background-position: 200% 0; }} }}
+        .error-banner {{
+            display: flex; gap: 8px; align-items: flex-start;
+            border: 1px solid #FCA5A5; background: #FEF2F2; color: #B91C1C;
+            border-radius: 4px; padding: 10px 12px; font-size: 13px; margin-bottom: 10px;
+        }}
+        .limited-banner {{
+            display: flex; gap: 8px; align-items: flex-start;
+            border: 1px solid #FCD34D; background: #FFFBEB; color: #92400E;
+            border-radius: 4px; padding: 10px 12px; font-size: 12px; margin-bottom: 10px;
+        }}
+        .summary-content {{ display: grid; gap: 8px; }}
         .priority-section {{
-            border-left: 4px solid var(--accent);
-            border-radius: 8px;
-            background: rgba(255,255,255,0.72);
-            padding: 12px 14px;
+            border: 1px solid var(--rule);
+            border-left: 3px solid var(--accent);
+            border-radius: 4px;
+            background: var(--paper);
+            padding: 8px 10px;
         }}
-        .priority-heading {{ margin: 0 0 6px; font-size: 16px; color: var(--accent-strong); }}
-        .priority-detail {{ margin: 0; white-space: normal; }}
-        .priority-winner {{ margin: 8px 0 0; font-weight: 700; color: var(--ink); }}
-        .priority-reason {{ margin: 4px 0 0; color: var(--muted); font-size: 14px; }}
+        .priority-heading-row {{ display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 4px; }}
+        .priority-heading {{ margin: 0; font-family: 'Lora', Georgia, serif; font-size: 14px; font-weight: 600; color: var(--ink); }}
+        .priority-detail {{ margin: 0; white-space: normal; font-size: 13px; }}
+        .priority-winner {{ margin: 5px 0 0; font-weight: 600; color: var(--ink); font-size: 12px; }}
+        .winner-badge {{
+            display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;
+            padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong);
+            white-space: nowrap; flex-shrink: 0;
+        }}
+        .winner-badge.draw {{ background: var(--soft); color: var(--muted); }}
+        .priority-reason {{ margin: 3px 0 0; color: var(--muted); font-size: 12px; }}
         .recommendation {{
-            border: 2px solid var(--accent);
-            border-radius: 10px;
+            border: 1px solid var(--accent);
+            border-radius: 4px;
             background: var(--accent-soft);
-            padding: 14px;
-            font-weight: 700;
+            padding: 10px 12px;
         }}
-        .recommendation-heading {{ margin: 0 0 4px; font-size: 16px; color: var(--accent-strong); }}
-        .citations {{ display: grid; gap: 10px; margin-top: 10px; }}
+        .recommendation-heading {{ margin: 0 0 3px; font-family: 'Lora', Georgia, serif; font-size: 14px; font-weight: 600; color: var(--accent-strong); }}
+        .citations {{ display: grid; gap: 8px; margin-top: 6px; }}
         .citation {{
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(22, 122, 90, 0.16);
-            font-size: 14px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--rule);
+            font-size: 13px;
         }}
-        .citation a {{ color: var(--accent-strong); font-weight: 700; text-decoration: underline; }}
+        .citation a {{ color: var(--accent-strong); font-weight: 600; text-decoration: underline; }}
         .citation button {{
             border: 0;
             background: transparent;
             color: var(--accent-strong);
             font: inherit;
-            font-weight: 700;
+            font-weight: 600;
             text-decoration: underline;
             padding: 0;
             cursor: pointer;
         }}
-        .summary-link {{ color: var(--accent-strong); font-weight: 700; text-decoration: underline; }}
-        .citation strong {{ display: inline-block; min-width: 34px; }}
+        .summary-link {{ color: var(--accent-strong); font-weight: 600; text-decoration: underline; }}
+        .citation strong {{ display: inline-block; min-width: 30px; color: var(--muted); font-weight: 600; }}
         .modal-backdrop {{
             position: fixed;
             inset: 0;
@@ -337,38 +367,250 @@ def _render_ui_html() -> str:
             cursor: pointer;
             font-weight: 700;
         }}
-        .modal-meta {{ font-size: 13px; color: var(--muted); margin-bottom: 12px; }}
+        .modal-meta {{ font-size: 12px; color: var(--muted); margin-bottom: 12px; }}
         .modal-content {{
-            border: 1px solid rgba(22, 122, 90, 0.16);
-            border-radius: 10px;
-            background: #fffefc;
-            padding: 16px;
+            border: 1px solid var(--rule);
+            border-radius: 4px;
+            background: var(--paper);
+            padding: 14px;
             white-space: pre-wrap;
-            line-height: 1.65;
-            font-size: 14px;
+            line-height: 1.6;
+            font-size: 13px;
         }}
         .verify {{
-            margin-top: 18px;
-            font-style: italic;
-            font-size: 14px;
+            margin-top: 14px;
+            font-size: 12px;
             color: var(--muted);
         }}
-        .status-line {{ margin-top: 14px; font-size: 13px; color: var(--muted); }}
-        .board-footer {{ text-align: center; margin-top: 10px; font-size: 13px; color: var(--muted); }}
-        @media (max-width: 1100px) {{
-            .title-row, .layout {{ grid-template-columns: 1fr; }}
+        .status-line {{ margin-top: 12px; font-size: 12px; color: var(--muted); }}
+        .board-footer {{ text-align: center; margin-top: 10px; font-size: 12px; color: var(--muted); }}
+        .auth-screen {{ min-height: 100vh; display: flex; }}
+        .auth-side {{
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 340px;
+            flex-shrink: 0;
+            padding: 40px 32px;
+            background: var(--accent-strong);
+            color: #FFFFFF;
         }}
+        @media (min-width: 900px) {{ .auth-side {{ display: flex; }} }}
+        .auth-side h2 {{ font-family: 'Lora', Georgia, serif; font-size: 20px; font-weight: 600; line-height: 1.4; margin: 24px 0 10px; }}
+        .auth-side p {{ font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; }}
+        .auth-logo {{ display: flex; align-items: center; gap: 10px; }}
+        .auth-logo .brand-mark {{ flex-shrink: 0; }}
+        .auth-logo-text {{ font-family: 'Lora', Georgia, serif; font-weight: 700; font-size: 15px; line-height: 1.3; text-transform: uppercase; letter-spacing: 0.02em; }}
+        .auth-mobile-logo {{ display: flex; justify-content: center; margin-bottom: 20px; color: var(--accent-strong); }}
+        @media (min-width: 900px) {{ .auth-mobile-logo {{ display: none; }} }}
+        .auth-feature {{ display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; }}
+        .auth-feature .tick {{
+            width: 16px; height: 16px; border-radius: 4px; background: rgba(255,255,255,0.14);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+        }}
+        .auth-feature strong {{ display: block; font-size: 12px; color: rgba(255,255,255,0.92); }}
+        .auth-feature span {{ font-size: 12px; color: rgba(255,255,255,0.55); }}
+        .auth-stripe {{ border-radius: 4px; padding: 10px 12px; background: var(--uol-red); }}
+        .auth-stripe strong {{ display: block; font-size: 12px; }}
+        .auth-stripe span {{ font-size: 11px; color: rgba(255,255,255,0.8); }}
+        .auth-main {{ flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--paper); }}
+        .auth-card {{ width: 100%; max-width: 340px; }}
+        .auth-card-stripe {{ height: 4px; border-radius: 4px 4px 0 0; background: var(--uol-red); }}
+        .auth-card-body {{ border: 1px solid var(--rule); border-top: 0; border-radius: 0 0 6px 6px; background: #FFFFFF; padding: 24px; }}
+        .auth-title {{ font-family: 'Lora', Georgia, serif; font-size: 19px; font-weight: 600; color: var(--accent-strong); margin: 0 0 3px; }}
+        .auth-subtitle {{ font-size: 12px; color: var(--muted); margin: 0 0 18px; }}
+        .auth-field {{ margin-bottom: 14px; }}
+        .auth-field label {{ display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: var(--ink); }}
+        .auth-field input, .auth-field select {{
+            width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 4px;
+            font: inherit; font-size: 13px; background: var(--paper); color: var(--ink);
+        }}
+        .auth-field input:focus, .auth-field select:focus {{ outline: none; border-color: var(--accent); }}
+        .auth-error {{ display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; border-radius: 4px; padding: 8px 10px; font-size: 12px; margin-bottom: 12px; }}
+        .auth-error.show {{ display: block; }}
+        .auth-success {{ text-align: center; padding: 8px 0; }}
+        .auth-success .check-circle {{
+            width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 12px; background: rgba(0,32,91,0.08);
+            display: flex; align-items: center; justify-content: center; color: var(--accent-strong);
+        }}
+        .auth-submit {{
+            width: 100%; padding: 10px; border: 0; border-radius: 4px; background: var(--accent-strong);
+            color: #FFFFFF; font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 4px;
+        }}
+        .auth-submit:hover {{ filter: brightness(1.08); }}
+        .auth-footer {{ margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--rule); text-align: center; font-size: 12px; color: var(--muted); }}
+        .auth-link {{ color: var(--uol-red); font-weight: 600; text-decoration: underline; background: none; border: 0; cursor: pointer; font: inherit; }}
+        .admin-shell {{ display: flex; min-height: calc(100vh - 54px); }}
+        .admin-sidebar {{ width: 210px; flex-shrink: 0; background: #FFFFFF; border-right: 1px solid var(--rule); padding: 16px 10px; }}
+        .admin-nav-item {{
+            display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+            padding: 8px 10px; border-radius: 4px; border: 0; background: transparent;
+            font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; margin-bottom: 2px;
+        }}
+        .admin-nav-item.active {{ background: rgba(0,32,91,0.08); color: var(--accent-strong); }}
+        .admin-main {{ flex: 1; padding: 20px 24px; min-width: 0; }}
+        .admin-page-title {{ font-family: 'Lora', Georgia, serif; font-size: 18px; font-weight: 600; margin: 0 0 16px; color: var(--ink); }}
+        .admin-tab {{ display: none; }}
+        .admin-tab.active {{ display: block; }}
+        .admin-stat-row {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 18px; }}
+        .admin-stat-card {{ border: 1px solid var(--rule); border-radius: 6px; background: #FFFFFF; padding: 12px 14px; }}
+        .admin-stat-card .value {{ font-size: 20px; font-weight: 700; color: var(--accent-strong); }}
+        .admin-stat-card .label {{ font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }}
+        .admin-panel {{ border: 1px solid var(--rule); border-radius: 6px; background: #FFFFFF; overflow: hidden; margin-bottom: 16px; }}
+        .admin-panel-head {{ padding: 10px 14px; border-bottom: 1px solid var(--rule); background: var(--soft); font-weight: 600; font-size: 13px; }}
+        .admin-panel-body {{ padding: 14px; }}
+        .admin-form-row {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px; }}
+        .admin-table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
+        .admin-table th {{ text-align: left; padding: 8px; border-bottom: 1px solid var(--rule); color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 11px; }}
+        .admin-table td {{ padding: 8px; border-bottom: 1px solid var(--rule); vertical-align: middle; }}
+        .admin-badge {{ display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }}
+        .admin-badge.active {{ background: rgba(0,32,91,0.1); color: var(--accent-strong); }}
+        .admin-badge.pending {{ background: #FFFBEB; color: #92400E; }}
+        .admin-badge.inactive {{ background: var(--soft); color: var(--muted); }}
+        .admin-badge.rejected {{ background: #FEF2F2; color: #B91C1C; }}
+        .admin-row-actions {{ display: flex; gap: 6px; flex-wrap: wrap; }}
+        .admin-mini-btn {{ border: 1px solid var(--rule); background: #FFFFFF; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer; }}
+        .admin-mini-btn.approve {{ color: var(--accent-strong); border-color: var(--accent-strong); }}
+        .admin-mini-btn.reject, .admin-mini-btn.deactivate {{ color: #B91C1C; border-color: #FECACA; }}
+        .kb-subtabs {{ display: flex; gap: 4px; border-bottom: 1px solid var(--rule); margin: 4px 0 14px; }}
+        .kb-subtab {{
+            border: 0; background: transparent; padding: 8px 12px; font-size: 12px; font-weight: 600;
+            color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+        }}
+        .kb-subtab.active {{ color: var(--accent-strong); border-bottom-color: var(--accent-strong); }}
+        .kb-subtab-panel {{ display: none; }}
+        .kb-subtab-panel.active {{ display: block; }}
+        .kb-status-pill {{ display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }}
+        .kb-status-pill.ok {{ background: rgba(0,32,91,0.1); color: var(--accent-strong); }}
+        .kb-status-pill.missing {{ background: #FEF2F2; color: #B91C1C; }}
+        .kb-status-pill.na {{ background: var(--soft); color: var(--muted); }}
+        .kb-run-result {{ border: 1px solid var(--rule); border-radius: 6px; background: #FFFFFF; padding: 10px 12px; margin-top: 10px; font-size: 12px; }}
+        .kb-run-result pre {{ white-space: pre-wrap; word-break: break-word; background: #1E1E1E; color: #D4D4D4; padding: 8px; border-radius: 4px; max-height: 220px; overflow: auto; margin-top: 6px; }}
     </style>
 </head>
 <body>
+    <div id="loginScreen" class="auth-screen">
+        <div class="auth-side">
+            <div>
+                <div class="auth-logo">
+                    <svg width="32" height="32" viewBox="0 0 40 40" fill="none" class="brand-mark">
+                        <path d="M20 2L4 8v10c0 10 7 17 16 20 9-3 16-10 16-20V8L20 2z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M13 14h14M13 20h14M13 26h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                    <span class="auth-logo-text">University of<br />Liverpool</span>
+                </div>
+                <h2>AI-powered competitive intelligence for Clearing.</h2>
+                <p>Deliver real-time, evidence-based programme comparisons during live Clearing calls.</p>
+                <div class="auth-feature">
+                    <span class="tick">&#10003;</span>
+                    <div><strong>Course comparisons</strong><span>BCS accreditation, modules, placements</span></div>
+                </div>
+                <div class="auth-feature">
+                    <span class="tick">&#10003;</span>
+                    <div><strong>Graduate outcomes</strong><span>Salary data, employment rates, LEO</span></div>
+                </div>
+                <div class="auth-feature">
+                    <span class="tick">&#10003;</span>
+                    <div><strong>Live rankings</strong><span>CUG, QS, TEF, NSS verified sources</span></div>
+                </div>
+            </div>
+            <div class="auth-stripe">
+                <strong>Clearing 2026 &middot; Mid-August</strong>
+                <span>University of Liverpool &middot; Computer Science</span>
+            </div>
+        </div>
+        <div class="auth-main">
+            <div class="auth-card">
+                <div class="auth-mobile-logo">
+                    <svg width="26" height="26" viewBox="0 0 40 40" fill="none" style="margin-right:8px;">
+                        <path d="M20 2L4 8v10c0 10 7 17 16 20 9-3 16-10 16-20V8L20 2z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M13 14h14M13 20h14M13 26h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                    <span class="auth-logo-text">University of Liverpool</span>
+                </div>
+                <div class="auth-card-stripe"></div>
+                <div class="auth-card-body">
+                    <h1 class="auth-title">Sign in</h1>
+                    <p class="auth-subtitle">Use your University of Liverpool staff credentials.</p>
+                    <div class="auth-error" id="loginError"></div>
+                    <div class="auth-field">
+                        <label for="loginEmail">Email address</label>
+                        <input id="loginEmail" type="email" placeholder="you@liverpool.ac.uk" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="loginPassword">Password</label>
+                        <input id="loginPassword" type="password" placeholder="********" />
+                    </div>
+                    <button class="auth-submit" onclick="handleLogin()">Sign in</button>
+                    <div class="auth-footer">
+                        New to Admissions Assistant? <button class="auth-link" onclick="showAuthScreen('register')">Request access</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="registerScreen" class="auth-screen" style="display:none">
+        <div class="auth-main" style="width:100%">
+            <div class="auth-card">
+                <div class="auth-mobile-logo" style="display:flex">
+                    <svg width="26" height="26" viewBox="0 0 40 40" fill="none" style="margin-right:8px;">
+                        <path d="M20 2L4 8v10c0 10 7 17 16 20 9-3 16-10 16-20V8L20 2z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M13 14h14M13 20h14M13 26h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                    <span class="auth-logo-text">University of Liverpool</span>
+                </div>
+                <div class="auth-card-stripe"></div>
+                <div class="auth-card-body" id="registerCardBody">
+                    <h1 class="auth-title">Request access</h1>
+                    <p class="auth-subtitle">Registration requires a @liverpool.ac.uk email address.</p>
+                    <div class="auth-error" id="registerError"></div>
+                    <div class="auth-field">
+                        <label for="registerName">Full name</label>
+                        <input id="registerName" type="text" placeholder="Jane Okafor" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="registerEmail">Email address</label>
+                        <input id="registerEmail" type="email" placeholder="you@liverpool.ac.uk" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="registerPassword">Password</label>
+                        <input id="registerPassword" type="password" placeholder="At least 8 characters" />
+                    </div>
+                    <button class="auth-submit" onclick="handleRegister()">Request access</button>
+                    <div class="auth-footer">
+                        Already have an account? <button class="auth-link" onclick="showAuthScreen('login')">Sign in</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboardScreen" style="display:none">
     <div class="frame">
         <div class="board">
+            <div class="board-stripe"></div>
             <div class="title-row">
-                <div></div>
-                <div>
-                    <h1 class="title">Admissions Tutor Dashboard</h1>
+                <div class="title-brand">
+                    <svg width="26" height="26" viewBox="0 0 40 40" fill="none" class="brand-mark">
+                        <path d="M20 2L4 8v10c0 10 7 17 16 20 9-3 16-10 16-20V8L20 2z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M13 14h14M13 20h14M13 26h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                    <h1 class="title">University of<br />Liverpool</h1>
                 </div>
-                <div></div>
+                <div class="header-actions">
+                    <span class="status-badge"><span class="dot"></span>Verified data</span>
+                    <button class="icon-button" onclick="location.reload()" title="Reload dashboard" aria-label="Reload dashboard">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    </button>
+                    <span class="user-chip">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span id="currentUserLabel">Tutor</span>
+                    </span>
+                    <button class="icon-button" onclick="signOut()" title="Sign out" aria-label="Sign out">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </button>
+                </div>
             </div>
 
             <div class="layout">
@@ -421,14 +663,16 @@ def _render_ui_html() -> str:
                 <section class="pane">
                     <h2 class="section-title">Comparison Summary</h2>
                     <div class="summary-box">
-                        <h3>Comparison Summary:</h3>
                         <div class="answer-card conversation" id="response">
-                            <div class="muted">Your verified comparison will appear here.</div>
+                            <div class="empty-state">
+                                <strong>Your verified comparison will appear here.</strong>
+                                Select a competitor, choose priorities, and click Compare.
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <section class="pane">
+                <section class="pane citations-col">
                     <h2 class="section-title">Citations</h2>
                     <div class="citations" id="sources">
                         <div class="citation"><strong>[1]</strong> Prospectus 2024</div>
@@ -438,6 +682,164 @@ def _render_ui_html() -> str:
                     <div class="verify">Click to verify →</div>
                 </section>
             </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="adminScreen" style="display:none">
+        <div class="board-stripe"></div>
+        <div class="title-row">
+            <div class="title-brand">
+                <svg width="26" height="26" viewBox="0 0 40 40" fill="none" class="brand-mark">
+                    <path d="M20 2L4 8v10c0 10 7 17 16 20 9-3 16-10 16-20V8L20 2z" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M13 14h14M13 20h14M13 26h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                </svg>
+                <h1 class="title">University of<br />Liverpool</h1>
+            </div>
+            <div class="header-actions">
+                <span class="status-badge"><span class="dot"></span>Administrator</span>
+                <span class="user-chip">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span id="adminUserLabel">Administrator</span>
+                </span>
+                <button class="icon-button" onclick="signOut()" title="Sign out" aria-label="Sign out">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="admin-shell">
+            <nav class="admin-sidebar">
+                <button class="admin-nav-item active" data-tab="users" onclick="showAdminTab('users')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    User Management
+                </button>
+                <button class="admin-nav-item" data-tab="knowledge" onclick="showAdminTab('knowledge')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                    Knowledge Base
+                </button>
+                <button class="admin-nav-item" data-tab="evaluation" onclick="showAdminTab('evaluation')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Model Evaluation
+                </button>
+                <button class="admin-nav-item" data-tab="system" onclick="showAdminTab('system')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M12 2v2M4.93 4.93l1.41 1.41M2 12h2M4.93 19.07l1.41-1.41M12 20v2M19.07 19.07l-1.41-1.41M20 12h2"/></svg>
+                    System
+                </button>
+            </nav>
+
+            <main class="admin-main">
+                <div id="adminTab-users" class="admin-tab active">
+                    <h2 class="admin-page-title">User Management</h2>
+                    <div class="admin-stat-row" id="adminUserStats"></div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">Add user</div>
+                        <div class="admin-panel-body">
+                            <div class="admin-form-row">
+                                <div class="auth-field" style="margin-bottom:0"><label>Full name</label><input id="adminNewName" type="text" placeholder="Jane Okafor" /></div>
+                                <div class="auth-field" style="margin-bottom:0"><label>Email</label><input id="adminNewEmail" type="email" placeholder="you@liverpool.ac.uk" /></div>
+                                <div class="auth-field" style="margin-bottom:0"><label>Department</label><input id="adminNewDepartment" type="text" placeholder="Computer Science" /></div>
+                                <div class="auth-field" style="margin-bottom:0">
+                                    <label>Role</label>
+                                    <select id="adminNewRole"><option value="tutor">Tutor</option><option value="admin">Admin</option></select>
+                                </div>
+                                <div class="auth-field" style="margin-bottom:0"><label>Temporary password</label><input id="adminNewPassword" type="text" placeholder="Temp1234!" /></div>
+                            </div>
+                            <div class="auth-error" id="adminCreateError"></div>
+                            <button class="auth-submit" style="width:auto;padding:8px 16px" onclick="adminCreateUser()">Create user</button>
+                        </div>
+                    </div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">All users</div>
+                        <div class="admin-panel-body" style="overflow-x:auto">
+                            <table class="admin-table">
+                                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Last login</th><th>Actions</th></tr></thead>
+                                <tbody id="adminUsersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="adminTab-knowledge" class="admin-tab">
+                    <h2 class="admin-page-title">Knowledge Base</h2>
+                    <div class="admin-stat-row" id="adminKnowledgeStats"></div>
+
+                    <div class="kb-subtabs">
+                        <button class="kb-subtab active" data-kbtab="sources" onclick="showKbSubtab('sources')">Data Sources</button>
+                        <button class="kb-subtab" data-kbtab="scripts" onclick="showKbSubtab('scripts')">Scripts</button>
+                        <button class="kb-subtab" data-kbtab="upload" onclick="showKbSubtab('upload')">Upload Data</button>
+                    </div>
+
+                    <div id="kbSubtab-sources" class="kb-subtab-panel active">
+                        <div class="admin-panel">
+                            <div class="admin-panel-body" style="overflow-x:auto">
+                                <table class="admin-table">
+                                    <thead><tr><th>Source</th><th>Script</th><th>CSV</th><th>Last updated</th><th>Actions</th></tr></thead>
+                                    <tbody id="kbSourcesTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="kbRunOutput"></div>
+                    </div>
+
+                    <div id="kbSubtab-scripts" class="kb-subtab-panel">
+                        <div class="admin-panel">
+                            <div class="admin-panel-head">Pipeline scripts</div>
+                            <div class="admin-panel-body">
+                                <div class="admin-row-actions" id="kbScriptButtons" style="flex-wrap:wrap"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="kbSubtab-upload" class="kb-subtab-panel">
+                        <div class="admin-panel">
+                            <div class="admin-panel-head">Upload CSV</div>
+                            <div class="admin-panel-body">
+                                <div class="admin-form-row">
+                                    <div class="auth-field" style="margin-bottom:0">
+                                        <label>Target file</label>
+                                        <select id="kbUploadTarget"></select>
+                                    </div>
+                                    <div class="auth-field" style="margin-bottom:0">
+                                        <label>CSV file</label>
+                                        <input id="kbUploadFile" type="file" accept=".csv" />
+                                    </div>
+                                </div>
+                                <div class="auth-error" id="kbUploadError"></div>
+                                <div id="kbUploadSuccess" style="display:none;font-size:12px;color:var(--accent-strong);margin-bottom:10px;"></div>
+                                <button class="auth-submit" style="width:auto;padding:8px 16px" onclick="kbUploadCsv()">Upload</button>
+                                <p style="font-size:11px;color:var(--muted);margin-top:10px;">Uploading CSV-version.csv replaces the file used by the Rankings, Fees &amp; Entry import script. The previous file is kept as a timestamped backup.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="adminTab-evaluation" class="admin-tab">
+                    <h2 class="admin-page-title">Model Evaluation</h2>
+                    <div class="admin-stat-row" id="adminEvaluationStats"></div>
+                </div>
+
+                <div id="adminTab-system" class="admin-tab">
+                    <h2 class="admin-page-title">System</h2>
+                    <div class="admin-stat-row" id="adminSystemStats"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="scriptModal" onclick="closeScriptModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()" style="max-width:720px;">
+            <div class="modal-head">
+                <div>
+                    <h3 class="modal-title" id="scriptModalTitle">script.py</h3>
+                    <div class="modal-meta" id="scriptModalMeta"></div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="modal-close" onclick="downloadScript()">Download</button>
+                    <button class="modal-close" onclick="closeScriptModal()">Close</button>
+                </div>
+            </div>
+            <pre class="modal-content" id="scriptModalContent" style="background:#1E1E1E;color:#D4D4D4;max-height:60vh;overflow:auto;"></pre>
         </div>
     </div>
 
@@ -457,6 +859,400 @@ def _render_ui_html() -> str:
     <script>
         const defaultApiKey = 'openwebui-local-key';
         const state = {{ summary: null, citations: [] }};
+        const SESSION_KEY = 'admissionsAssistantSession';
+
+        function showAuthScreen(name) {{
+            document.getElementById('loginScreen').style.display = name === 'login' ? 'flex' : 'none';
+            document.getElementById('registerScreen').style.display = name === 'register' ? 'flex' : 'none';
+            document.getElementById('dashboardScreen').style.display = 'none';
+            document.getElementById('adminScreen').style.display = 'none';
+        }}
+
+        function showDashboard(displayName) {{
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('registerScreen').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'block';
+            document.getElementById('adminScreen').style.display = 'none';
+            document.getElementById('currentUserLabel').textContent = displayName;
+        }}
+
+        function showAdminScreen(displayName) {{
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('registerScreen').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'none';
+            document.getElementById('adminScreen').style.display = 'block';
+            document.getElementById('adminUserLabel').textContent = displayName;
+            loadAdminOverview();
+            loadKbSources();
+        }}
+
+        function enterApp(user) {{
+            if (user.role === 'admin') {{
+                showAdminScreen(user.name);
+            }} else {{
+                showDashboard(user.name);
+            }}
+        }}
+
+        function showAdminTab(tab) {{
+            document.querySelectorAll('.admin-tab').forEach((el) => el.classList.toggle('active', el.id === `adminTab-${{tab}}`));
+            document.querySelectorAll('.admin-nav-item').forEach((el) => el.classList.toggle('active', el.dataset.tab === tab));
+        }}
+
+        function statCard(label, value) {{
+            return `<div class="admin-stat-card"><div class="value">${{escapeHtml(String(value))}}</div><div class="label">${{escapeHtml(label)}}</div></div>`;
+        }}
+
+        function adminUserActions(user) {{
+            const buttons = [];
+            if (user.status === 'pending') {{
+                buttons.push(`<button class="admin-mini-btn approve" onclick="adminSetStatus('${{user.id}}','active')">Approve</button>`);
+                buttons.push(`<button class="admin-mini-btn reject" onclick="adminRejectUser('${{user.id}}')">Reject</button>`);
+            }} else if (user.status === 'active') {{
+                buttons.push(`<button class="admin-mini-btn deactivate" onclick="adminSetStatus('${{user.id}}','inactive')">Deactivate</button>`);
+            }} else {{
+                buttons.push(`<button class="admin-mini-btn approve" onclick="adminSetStatus('${{user.id}}','active')">Activate</button>`);
+            }}
+            return buttons.join(' ');
+        }}
+
+        function renderAdminUsers(users) {{
+            const counts = {{ active: 0, pending: 0, inactive: 0, rejected: 0 }};
+            users.forEach((u) => {{ counts[u.status] = (counts[u.status] || 0) + 1; }});
+            document.getElementById('adminUserStats').innerHTML = [
+                statCard('Total users', users.length),
+                statCard('Active', counts.active || 0),
+                statCard('Pending', counts.pending || 0),
+                statCard('Inactive', counts.inactive || 0),
+                statCard('Rejected', counts.rejected || 0),
+            ].join('');
+
+            document.getElementById('adminUsersTableBody').innerHTML = users.map((u) => `
+                <tr>
+                    <td>${{escapeHtml(u.name)}}</td>
+                    <td>${{escapeHtml(u.email)}}</td>
+                    <td>${{escapeHtml(u.role)}}</td>
+                    <td>${{escapeHtml(u.department || '—')}}</td>
+                    <td><span class="admin-badge ${{u.status}}">${{escapeHtml(u.status)}}</span></td>
+                    <td>${{u.lastLogin ? escapeHtml(u.lastLogin) : 'Never'}}</td>
+                    <td><div class="admin-row-actions">${{adminUserActions(u)}}</div></td>
+                </tr>`).join('');
+        }}
+
+        async function loadAdminOverview() {{
+            try {{
+                const response = await fetch('/api/admin/overview', {{ headers: authHeaders() }});
+                const data = await response.json();
+                state.admin = data;
+                renderAdminUsers(data.users || []);
+
+                const k = data.knowledge || {{}};
+                document.getElementById('adminKnowledgeStats').innerHTML = [
+                    statCard('Knowledge base entries', k.kbEntries ?? 0),
+                    statCard('Last updated', k.kbUpdated || 'Unknown'),
+                    statCard('Course records (SQL)', k.courseFactsRows ?? 0),
+                    statCard('Structured DB', k.sqlDbPresent ? 'Connected' : 'Missing'),
+                    statCard('Vector store', k.chromaDbPresent ? 'Connected' : 'Missing'),
+                ].join('');
+
+                const e = data.evaluation || {{}};
+                document.getElementById('adminEvaluationStats').innerHTML = e.available === false
+                    ? '<p style="font-size:12px;color:var(--muted)">No evaluation summary has been generated yet.</p>'
+                    : [
+                        statCard('Total questions', e.total_questions ?? 'N/A'),
+                        statCard('Avg confidence', e.avg_confidence_score ?? 'N/A'),
+                        statCard('Abstain count', e.abstain_count ?? 'N/A'),
+                        statCard('Avg faithfulness', e.avg_faithfulness ?? 'N/A'),
+                        statCard('Avg relevancy', e.avg_answer_relevancy ?? 'N/A'),
+                        statCard('Avg precision', e.avg_context_precision ?? 'N/A'),
+                        statCard('Avg recall', e.avg_context_recall ?? 'N/A'),
+                    ].join('');
+
+                const s = data.system || {{}};
+                document.getElementById('adminSystemStats').innerHTML = [
+                    statCard('Gemini configured', s.geminiConfigured ? 'Yes' : 'No'),
+                    statCard('API auth configured', s.apiAuthConfigured ? 'Yes' : 'No'),
+                    statCard('Total users', s.usersTotal ?? 0),
+                    statCard('Active users', s.usersActive ?? 0),
+                    statCard('Pending approvals', s.usersPending ?? 0),
+                    statCard('Server time', s.serverTime || ''),
+                ].join('');
+            }} catch (error) {{
+                document.getElementById('adminUsersTableBody').innerHTML = `<tr><td colspan="7">Unable to load users: ${{escapeHtml(error.message)}}</td></tr>`;
+            }}
+        }}
+
+        async function adminSetStatus(id, status, reason) {{
+            await fetch(`/api/auth/users/${{id}}/status`, {{
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({{ status, rejection_reason: reason || null }}),
+            }});
+            loadAdminOverview();
+        }}
+
+        function adminRejectUser(id) {{
+            const reason = window.prompt('Reason for rejection (shown to the applicant):', '');
+            if (reason === null) return;
+            adminSetStatus(id, 'rejected', reason);
+        }}
+
+        async function adminCreateUser() {{
+            const name = document.getElementById('adminNewName').value.trim();
+            const email = document.getElementById('adminNewEmail').value.trim();
+            const department = document.getElementById('adminNewDepartment').value.trim();
+            const role = document.getElementById('adminNewRole').value;
+            const password = document.getElementById('adminNewPassword').value || 'Temp1234!';
+            setAuthError('adminCreateError', '');
+            if (!name || !email) {{
+                setAuthError('adminCreateError', 'Name and email are required.');
+                return;
+            }}
+            try {{
+                const response = await fetch('/api/auth/users', {{
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({{ name, email, password, role, department: department || null }}),
+                }});
+                const result = await response.json();
+                if (!result.ok) {{
+                    setAuthError('adminCreateError', result.error || 'Unable to create user.');
+                    return;
+                }}
+                document.getElementById('adminNewName').value = '';
+                document.getElementById('adminNewEmail').value = '';
+                document.getElementById('adminNewDepartment').value = '';
+                document.getElementById('adminNewPassword').value = '';
+                loadAdminOverview();
+            }} catch (error) {{
+                setAuthError('adminCreateError', `Unable to reach the admissions service: ${{error.message}}`);
+            }}
+        }}
+
+        function showKbSubtab(tab) {{
+            document.querySelectorAll('.kb-subtab-panel').forEach((el) => el.classList.toggle('active', el.id === `kbSubtab-${{tab}}`));
+            document.querySelectorAll('.kb-subtab').forEach((el) => el.classList.toggle('active', el.dataset.kbtab === tab));
+        }}
+
+        function kbStatusPill(exists) {{
+            if (exists === null || exists === undefined) return '<span class="kb-status-pill na">N/A</span>';
+            return exists ? '<span class="kb-status-pill ok">Found</span>' : '<span class="kb-status-pill missing">Missing</span>';
+        }}
+
+        function renderKbSources(sources) {{
+            document.getElementById('kbSourcesTableBody').innerHTML = sources.map((s) => {{
+                const csvCell = s.csv
+                    ? `${{escapeHtml(s.csv)}} (${{s.csvRows ?? 0}} rows) ${{kbStatusPill(s.csvExists)}}`
+                    : '<span class="kb-status-pill na">N/A</span>';
+                const runBtn = s.runnable
+                    ? `<button class="admin-mini-btn approve" onclick="kbRunScript('${{s.script}}','${{s.id}}')">Run now</button>`
+                    : '<span class="kb-status-pill na">Module only</span>';
+                return `<tr id="kbRow-${{s.id}}">
+                    <td><strong>${{escapeHtml(s.label)}}</strong><br /><span style="color:var(--muted);font-size:11px;">${{escapeHtml(s.description)}}</span></td>
+                    <td>${{escapeHtml(s.script)}} ${{kbStatusPill(s.scriptExists)}}<br /><button class="admin-mini-btn" onclick="openScriptModal('${{s.script}}')">View script</button></td>
+                    <td>${{csvCell}}</td>
+                    <td>${{s.csvUpdatedAt ? escapeHtml(s.csvUpdatedAt) : (s.scriptUpdatedAt ? escapeHtml(s.scriptUpdatedAt) : '—')}}</td>
+                    <td><div class="admin-row-actions">${{runBtn}}</div></td>
+                </tr>`;
+            }}).join('');
+
+            document.getElementById('kbScriptButtons').innerHTML = sources.map((s) =>
+                `<button class="admin-mini-btn" onclick="openScriptModal('${{s.script}}')">${{escapeHtml(s.script)}}</button>`
+            ).join('');
+        }}
+
+        async function loadKbSources() {{
+            try {{
+                const response = await fetch('/api/admin/kb/sources', {{ headers: authHeaders() }});
+                const data = await response.json();
+                state.kbSources = data.sources || [];
+                renderKbSources(state.kbSources);
+
+                const select = document.getElementById('kbUploadTarget');
+                select.innerHTML = (data.uploadTargets || []).map((t) => `<option value="${{escapeHtml(t)}}">${{escapeHtml(t)}}</option>`).join('');
+            }} catch (error) {{
+                document.getElementById('kbSourcesTableBody').innerHTML = `<tr><td colspan="5">Unable to load sources: ${{escapeHtml(error.message)}}</td></tr>`;
+            }}
+        }}
+
+        async function kbRunScript(script, sourceId) {{
+            const row = document.getElementById(`kbRow-${{sourceId}}`);
+            const output = document.getElementById('kbRunOutput');
+            output.innerHTML = `<div class="kb-run-result"><span class="spinner"></span> Running ${{escapeHtml(script)}}…</div>`;
+            if (row) row.style.opacity = '0.6';
+            try {{
+                const response = await fetch('/api/admin/kb/run', {{
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({{ script }}),
+                }});
+                const result = await response.json();
+                const status = result.ok ? 'kb-status-pill ok' : 'kb-status-pill missing';
+                output.innerHTML = `
+                    <div class="kb-run-result">
+                        <span class="${{status}}">${{result.ok ? 'Completed' : 'Failed'}}</span>
+                        <strong> ${{escapeHtml(script)}}</strong>
+                        ${{result.error ? `<div style="color:#B91C1C;margin-top:6px;">${{escapeHtml(result.error)}}</div>` : ''}}
+                        ${{result.stdout ? `<div>stdout:</div><pre>${{escapeHtml(result.stdout)}}</pre>` : ''}}
+                        ${{result.stderr ? `<div>stderr:</div><pre>${{escapeHtml(result.stderr)}}</pre>` : ''}}
+                    </div>`;
+            }} catch (error) {{
+                output.innerHTML = `<div class="kb-run-result" style="color:#B91C1C;">Unable to run ${{escapeHtml(script)}}: ${{escapeHtml(error.message)}}</div>`;
+            }} finally {{
+                if (row) row.style.opacity = '1';
+                loadKbSources();
+                loadAdminOverview();
+            }}
+        }}
+
+        async function openScriptModal(scriptName) {{
+            document.getElementById('scriptModalTitle').textContent = scriptName;
+            document.getElementById('scriptModalMeta').textContent = 'Loading…';
+            document.getElementById('scriptModalContent').textContent = '';
+            document.getElementById('scriptModal').classList.add('open');
+            try {{
+                const response = await fetch(`/api/admin/kb/script/${{encodeURIComponent(scriptName)}}`, {{ headers: authHeaders() }});
+                const data = await response.json();
+                state.activeScript = data;
+                document.getElementById('scriptModalMeta').textContent = `${{(data.content || '').split('\\n').length}} lines`;
+                document.getElementById('scriptModalContent').textContent = data.content || '';
+            }} catch (error) {{
+                document.getElementById('scriptModalMeta').textContent = 'Failed to load script.';
+            }}
+        }}
+
+        function closeScriptModal(event) {{
+            if (event && event.target && event.target.id !== 'scriptModal') return;
+            document.getElementById('scriptModal').classList.remove('open');
+        }}
+
+        function downloadScript() {{
+            const script = state.activeScript;
+            if (!script) return;
+            const blob = new Blob([script.content || ''], {{ type: 'text/x-python' }});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = script.filename; a.click();
+            URL.revokeObjectURL(url);
+        }}
+
+        async function kbUploadCsv() {{
+            const target = document.getElementById('kbUploadTarget').value;
+            const fileInput = document.getElementById('kbUploadFile');
+            const file = fileInput.files[0];
+            setAuthError('kbUploadError', '');
+            document.getElementById('kbUploadSuccess').style.display = 'none';
+            if (!file) {{
+                setAuthError('kbUploadError', 'Choose a CSV file to upload.');
+                return;
+            }}
+            const formData = new FormData();
+            formData.append('target', target);
+            formData.append('file', file);
+            try {{
+                const response = await fetch('/api/admin/kb/upload', {{
+                    method: 'POST',
+                    headers: {{ 'Authorization': `Bearer ${{defaultApiKey}}` }},
+                    body: formData,
+                }});
+                const result = await response.json();
+                if (!result.ok) {{
+                    setAuthError('kbUploadError', result.error || 'Upload failed.');
+                    return;
+                }}
+                const successEl = document.getElementById('kbUploadSuccess');
+                successEl.style.display = 'block';
+                successEl.textContent = `Uploaded ${{result.file}} (${{result.rows}} rows).`;
+                fileInput.value = '';
+                loadKbSources();
+            }} catch (error) {{
+                setAuthError('kbUploadError', `Unable to reach the admissions service: ${{error.message}}`);
+            }}
+        }}
+
+        function setAuthError(elementId, message) {{
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.toggle('show', Boolean(message));
+        }}
+
+        async function handleLogin() {{
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) {{
+                setAuthError('loginError', 'Please enter your email address and password.');
+                return;
+            }}
+            setAuthError('loginError', '');
+            try {{
+                const response = await fetch('/api/auth/login', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ email, password }}),
+                }});
+                const result = await response.json();
+                if (!result.ok) {{
+                    setAuthError('loginError', result.error || 'Sign in failed.');
+                    return;
+                }}
+                sessionStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
+                enterApp(result.user);
+            }} catch (error) {{
+                setAuthError('loginError', `Unable to reach the admissions service: ${{error.message}}`);
+            }}
+        }}
+
+        async function handleRegister() {{
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            if (!name || !email || !password) {{
+                setAuthError('registerError', 'Please complete every field.');
+                return;
+            }}
+            setAuthError('registerError', '');
+            let result;
+            try {{
+                const response = await fetch('/api/auth/register', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ name, email, password }}),
+                }});
+                result = await response.json();
+            }} catch (error) {{
+                setAuthError('registerError', `Unable to reach the admissions service: ${{error.message}}`);
+                return;
+            }}
+            if (!result.ok) {{
+                setAuthError('registerError', result.error || 'Registration failed.');
+                return;
+            }}
+            document.getElementById('registerCardBody').innerHTML = `
+                <div class="auth-success">
+                    <div class="check-circle">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <h1 class="auth-title">Request submitted</h1>
+                    <p class="auth-subtitle">An administrator will review your access request for ${{escapeHtml(name)}}.</p>
+                    <button class="auth-submit" onclick="showAuthScreen('login')">Back to sign in</button>
+                </div>`;
+        }}
+
+        function signOut() {{
+            sessionStorage.removeItem(SESSION_KEY);
+            showAuthScreen('login');
+        }}
+
+        function restoreSession() {{
+            const raw = sessionStorage.getItem(SESSION_KEY);
+            if (!raw) {{ showAuthScreen('login'); return; }}
+            try {{
+                const session = JSON.parse(raw);
+                enterApp({{ name: session.name || 'Tutor', role: session.role || 'tutor' }});
+            }} catch (error) {{
+                showAuthScreen('login');
+            }}
+        }}
 
         function authHeaders() {{
             const key = defaultApiKey;
@@ -500,7 +1296,12 @@ def _render_ui_html() -> str:
 
         function formatComparisonSummary(answer) {{
             const raw = String(answer || '').replace(/\\r?\\n/g, ' ').trim();
-            if (!raw) return '<div class="muted">No answer returned.</div>';
+            if (!raw) return '<div class="empty-state">No answer returned.</div>';
+
+            const isLimited = /too limited|limited data|limited evidence|could not be fully verified/i.test(raw);
+            const limitedBanner = isLimited
+                ? '<div class="limited-banner"><strong>Limited evidence:</strong>&nbsp;Some selected priorities have partial or unverified data. Treat those figures with caution.</div>'
+                : '';
 
             let body = raw.replace(/^Decision summary:\s*/i, '');
             let recommendation = '';
@@ -527,10 +1328,17 @@ def _render_ui_html() -> str:
                     reason = remainder.replace(/^\.\s*/, '').trim();
                 }}
 
+                const isDraw = /unavailable|draw|closely matched/i.test(winner) || !winner;
+                const badge = winner
+                    ? `<span class="winner-badge${{isDraw ? ' draw' : ''}}">${{isDraw ? 'No clear winner' : escapeHtml(winner)}}</span>`
+                    : '';
+
                 return `<section class="priority-section">
-                    <h4 class="priority-heading">${{escapeHtml(heading)}}</h4>
+                    <div class="priority-heading-row">
+                        <h4 class="priority-heading">${{escapeHtml(heading)}}</h4>
+                        ${{badge}}
+                    </div>
                     <p class="priority-detail">${{linkSummaryCitations(detail)}}</p>
-                    ${{winner ? `<p class="priority-winner">Winner: ${{linkSummaryCitations(winner)}}</p>` : ''}}
                     ${{reason ? `<p class="priority-reason">${{linkSummaryCitations(reason)}}</p>` : ''}}
                 </section>`;
             }}).join('');
@@ -538,7 +1346,7 @@ def _render_ui_html() -> str:
             const recommendationHtml = recommendation
                 ? `<section class="recommendation"><h4 class="recommendation-heading">Overall Recommendation</h4><div>${{linkSummaryCitations(recommendation)}}</div></section>`
                 : '';
-            return `<div class="summary-content">${{rendered}}${{recommendationHtml}}</div>`;
+            return `${{limitedBanner}}<div class="summary-content">${{rendered}}${{recommendationHtml}}</div>`;
         }}
 
         function openCitationByNumber(number) {{
@@ -602,6 +1410,11 @@ def _render_ui_html() -> str:
             ].filter(Boolean);
             const additionalInstruction = document.getElementById('question').value.trim();
 
+            if (priorities.length === 0) {{
+                document.getElementById('response').innerHTML = '<div class="error-banner">Please select at least one priority before comparing.</div>';
+                return;
+            }}
+
             const promptParts = [
                 `Compare the target programme "${{targetProgramme}}" from "${{baselineUniversity}}" against the selected competitor university "${{competitorUniversity || 'N/A'}}" using the selected priorities (${{priorities.join(', ') || 'none'}}) and return a short decision summary.`
             ];
@@ -610,7 +1423,13 @@ def _render_ui_html() -> str:
             }}
             const tutorPrompt = promptParts.join('\\n');
 
-            document.getElementById('response').textContent = 'Generating comparison summary...';
+            document.getElementById('response').innerHTML = `
+                <div class="loading-state">
+                    <div class="loading-row"><span class="spinner"></span>Generating comparison summary…</div>
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                </div>`;
 
             try {{
                 const response = await fetch('/api/chat', {{
@@ -629,12 +1448,13 @@ def _render_ui_html() -> str:
                 if (!response.ok) throw new Error(result.detail || 'Request failed');
                 setSummaryText(result);
             }} catch (error) {{
-                document.getElementById('response').textContent = `Request failed: ${{error.message}}`;
+                document.getElementById('response').innerHTML = `<div class="error-banner">Comparison unavailable: ${{escapeHtml(error.message)}}</div>`;
             }}
         }}
 
         refreshStatus();
         setInterval(refreshStatus, 12000);
+        restoreSession();
     </script>
 </body>
 </html>""".format(UI_TITLE=UI_TITLE)
@@ -855,12 +1675,235 @@ def root() -> HTMLResponse:
 
 @app.on_event("startup")
 def startup_event() -> None:
+    auth_db.init_auth_db()
     _prewarm_rag()
 
 
 @app.get("/health")
 def health() -> Dict[str, str]:
     return {"status": "healthy"}
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    department: Optional[str] = None
+
+
+class UserStatusRequest(BaseModel):
+    status: str
+    rejection_reason: Optional[str] = None
+
+
+class CreateUserRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: str = "tutor"
+    department: Optional[str] = None
+
+
+def _user_public_fields(row) -> Dict[str, Any]:
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "email": row["email"],
+        "role": row["role"],
+        "department": row["department"],
+        "status": row["status"],
+        "lastLogin": row["last_login"],
+        "createdAt": row["created_at"],
+    }
+
+
+@app.post("/api/auth/login")
+def api_auth_login(payload: LoginRequest) -> Dict[str, Any]:
+    row = auth_db.get_user_by_email(payload.email)
+    if row is None:
+        return {"ok": False, "error": "No account found with this email address."}
+
+    if auth_db.hash_password(payload.password) != row["password_hash"]:
+        return {"ok": False, "error": "Incorrect password."}
+
+    if row["status"] == "rejected":
+        reason = f": {row['rejection_reason']}" if row["rejection_reason"] else "."
+        return {"ok": False, "error": f"Your registration was not approved{reason} Contact the administrator."}
+    if row["status"] == "pending":
+        return {"ok": False, "error": "Your account is awaiting administrator approval. You will be notified by email."}
+    if row["status"] == "inactive":
+        return {"ok": False, "error": "This account has been deactivated. Contact your administrator."}
+
+    auth_db.update_last_login(row["id"])
+    return {"ok": True, "user": _user_public_fields(row)}
+
+
+@app.post("/api/auth/register")
+def api_auth_register(payload: RegisterRequest) -> Dict[str, Any]:
+    email = payload.email.strip().lower()
+    if not email.endswith("@liverpool.ac.uk"):
+        return {"ok": False, "error": "Registration requires a @liverpool.ac.uk email address."}
+    if len(payload.password) < 8:
+        return {"ok": False, "error": "Password must be at least 8 characters."}
+    if auth_db.get_user_by_email(email) is not None:
+        return {"ok": False, "error": "An account with this email already exists."}
+
+    user = auth_db.create_user(payload.name.strip(), email, payload.password, "tutor", payload.department)
+    return {"ok": True, "user": user}
+
+
+@app.get("/api/auth/users")
+def api_auth_list_users(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    rows = auth_db.list_users()
+    return {"users": [
+        {
+            "id": r["id"], "name": r["name"], "email": r["email"], "role": r["role"],
+            "department": r["department"], "status": r["status"],
+            "lastLogin": r["last_login"], "createdAt": r["created_at"],
+        }
+        for r in rows
+    ]}
+
+
+@app.post("/api/auth/users/{user_id}/status")
+def api_auth_update_status(
+    user_id: str,
+    payload: UserStatusRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    try:
+        auth_db.update_user_status(user_id, payload.status, payload.rejection_reason)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {"ok": True}
+
+
+@app.post("/api/auth/users")
+def api_auth_create_user(
+    payload: CreateUserRequest,
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    email = payload.email.strip().lower()
+    if not email.endswith("@liverpool.ac.uk"):
+        return {"ok": False, "error": "Must be a @liverpool.ac.uk email."}
+    if auth_db.get_user_by_email(email) is not None:
+        return {"ok": False, "error": "Email already exists."}
+    if payload.role not in auth_db.VALID_ROLES:
+        return {"ok": False, "error": "Invalid role."}
+
+    user = auth_db.create_user(payload.name.strip(), email, payload.password or "Temp1234!", payload.role, payload.department)
+    auth_db.update_user_status(user["id"], "active")
+    return {"ok": True, "user": {**user, "status": "active"}}
+
+
+def _knowledge_base_summary() -> Dict[str, Any]:
+    root = os.path.dirname(os.path.abspath(__file__))
+    kb_path = os.path.join(root, "clearing_knowledge_base.json")
+    kb_entries = 0
+    kb_updated: Optional[str] = None
+    if os.path.exists(kb_path):
+        try:
+            with open(kb_path, "r", encoding="utf-8") as handle:
+                kb_entries = len(json.load(handle))
+        except Exception:
+            kb_entries = 0
+        kb_updated = time.strftime("%Y-%m-%d %H:%M", time.localtime(os.path.getmtime(kb_path)))
+
+    sql_db_path = os.getenv("SQL_DB_PATH", os.path.join(root, "admissions_structured.db"))
+    course_rows = 0
+    if os.path.exists(sql_db_path):
+        try:
+            conn = sqlite3.connect(sql_db_path)
+            course_rows = conn.execute("SELECT COUNT(*) FROM course_facts").fetchone()[0]
+            conn.close()
+        except Exception:
+            course_rows = 0
+
+    chroma_dir = os.getenv("CHROMA_DB_PATH", os.path.join(root, "chroma_db"))
+    return {
+        "kbEntries": kb_entries,
+        "kbUpdated": kb_updated,
+        "courseFactsRows": course_rows,
+        "sqlDbPresent": os.path.exists(sql_db_path),
+        "chromaDbPresent": os.path.isdir(chroma_dir),
+    }
+
+
+def _system_summary(users: List[Dict[str, Any]]) -> Dict[str, Any]:
+    gemini_configured = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GIMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
+    return {
+        "geminiConfigured": gemini_configured,
+        "apiAuthConfigured": bool(os.getenv("API_AUTH_KEY", "openwebui-local-key")),
+        "usersTotal": len(users),
+        "usersActive": sum(1 for u in users if u["status"] == "active"),
+        "usersPending": sum(1 for u in users if u["status"] == "pending"),
+        "serverTime": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+
+@app.get("/api/admin/overview")
+def api_admin_overview(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    rows = auth_db.list_users()
+    users = [
+        {
+            "id": r["id"], "name": r["name"], "email": r["email"], "role": r["role"],
+            "department": r["department"], "status": r["status"],
+            "lastLogin": r["last_login"], "createdAt": r["created_at"],
+        }
+        for r in rows
+    ]
+    return {
+        "users": users,
+        "knowledge": _knowledge_base_summary(),
+        "evaluation": _load_summary_metrics(),
+        "system": _system_summary(users),
+    }
+
+
+class RunScriptRequest(BaseModel):
+    script: str
+
+
+@app.get("/api/admin/kb/sources")
+def api_admin_kb_sources(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    return {"sources": admin_kb.list_sources(), "uploadTargets": sorted(admin_kb.UPLOAD_TARGETS)}
+
+
+@app.get("/api/admin/kb/script/{script_name}")
+def api_admin_kb_script(script_name: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    try:
+        content = admin_kb.read_script(script_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    return {"filename": script_name, "content": content}
+
+
+@app.post("/api/admin/kb/run")
+def api_admin_kb_run(payload: RunScriptRequest, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    return admin_kb.run_script(payload.script)
+
+
+@app.post("/api/admin/kb/upload")
+async def api_admin_kb_upload(
+    target: str = Form(...),
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    content = await file.read()
+    return admin_kb.save_uploaded_csv(target, content)
 
 
 @app.get("/api/summary")
