@@ -1,0 +1,14 @@
+ID,Target Competitor,Question,GroundTruth,Needs Human Review?
+1,University of Leeds,What is the UCAS code for the Computer Science BSc?,Information Not Available in Source Documentation,YES
+2,University of Leeds,How long is the standard BSc degree program?,Information Not Available in Source Documentation,YES
+3,University of Leeds,What are the core modules taught in Year 1?,"**University of Leeds (CS303) — Year 1 Core Modules:**
+
+* **COMP1111** Procedural Coding
+* **COMP1222** Discrete Mathematics
+* Systems Architecture",YES
+4,University of Leeds,What are the core modules taught in Year 2?,"**University of Leeds (CS303) — Year 2 Modules:**
+
+* COMP2333 Data Structures
+* Software Engineering Paradigms
+* Database Systems",YES
+5,University of Leeds,How many credits is the final year project worth?,Information Not Available in Source Documentation,YES

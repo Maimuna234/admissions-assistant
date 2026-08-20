@@ -1,15 +1,17 @@
 import os
 import json
+import csv
 import time
 import uuid
 import sys
 import sqlite3
 import threading
+import subprocess
 from typing import Any, Dict, Iterator, List, Optional
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from pydantic import BaseModel
 
 import admin_kb
@@ -22,6 +24,9 @@ MODEL_ID = "admissions-rag"
 UI_TITLE = "Admissions Assistant"
 BASELINE_UNIVERSITY = "University of Liverpool"
 BASELINE_PROGRAMME = "Computer Science BSc"
+ROOT = os.path.dirname(os.path.abspath(__file__))
+EVALUATION_SCRIPT = "evaluator.py"
+DATA_AUDIT_SCRIPT = "audit_priority_data.py"
 
 
 def _force_utf8_stdio() -> None:
@@ -66,6 +71,183 @@ def _load_summary_metrics() -> Dict[str, Any]:
                         "source": summary_path,
                         "error": str(exc),
                 }
+
+
+def _resolve_workspace_file(filename: str) -> str:
+    if os.path.isabs(filename):
+        return filename
+    return os.path.join(ROOT, filename)
+
+
+def _safe_float(value: Any) -> Optional[float]:
+    try:
+        if value is None or value == "":
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _file_meta(path: str) -> Dict[str, Any]:
+    if not os.path.exists(path):
+        return {"exists": False, "path": path, "updatedAt": None, "sizeBytes": 0}
+    return {
+        "exists": True,
+        "path": path,
+        "updatedAt": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(os.path.getmtime(path))),
+        "sizeBytes": os.path.getsize(path),
+    }
+
+
+def _csv_row_count(path: str) -> int:
+    if not os.path.exists(path):
+        return 0
+    with open(path, "r", newline="", encoding="utf-8-sig") as handle:
+        return max(0, sum(1 for _ in csv.reader(handle)) - 1)
+
+
+def _read_csv_rows(path: str) -> List[Dict[str, str]]:
+    if not os.path.exists(path):
+        return []
+    with open(path, "r", newline="", encoding="utf-8-sig") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _run_workspace_script(script_name: str, timeout: int = 300) -> Dict[str, Any]:
+    script_path = _resolve_workspace_file(script_name)
+    if not os.path.exists(script_path):
+        return {"ok": False, "error": f"{script_name} was not found in the project directory."}
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, script_path],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": f"{script_name} timed out after {timeout} seconds."}
+    except OSError as exc:
+        return {"ok": False, "error": str(exc)}
+
+    return {
+        "ok": proc.returncode == 0,
+        "returncode": proc.returncode,
+        "stdout": (proc.stdout or "")[-5000:],
+        "stderr": (proc.stderr or "")[-5000:],
+    }
+
+
+def _list_matching_files(prefixes: List[str]) -> List[Dict[str, Any]]:
+    matches: List[Dict[str, Any]] = []
+    for name in sorted(os.listdir(ROOT)):
+        if not os.path.isfile(os.path.join(ROOT, name)):
+            continue
+        lower = name.lower()
+        if any(lower.startswith(prefix.lower()) for prefix in prefixes):
+            path = os.path.join(ROOT, name)
+            matches.append({
+                "name": name,
+                "sizeBytes": os.path.getsize(path),
+                "updatedAt": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(os.path.getmtime(path))),
+            })
+    return matches
+
+
+def _evaluation_dashboard_payload() -> Dict[str, Any]:
+    summary_path = _resolve_workspace_file("evaluation_summary.csv")
+    summary_rows = _read_csv_rows(summary_path)
+    summary = dict(summary_rows[0]) if summary_rows else {}
+    for key in [
+        "avg_confidence_score",
+        "avg_faithfulness",
+        "avg_answer_relevancy",
+        "avg_context_precision",
+        "avg_context_recall",
+    ]:
+        numeric_value = _safe_float(summary.get(key))
+        if numeric_value is not None:
+            summary[key] = numeric_value
+    for key in ["total_questions", "abstain_count"]:
+        try:
+            summary[key] = int(float(summary.get(key, 0)))
+        except (TypeError, ValueError):
+            summary[key] = 0
+
+    return {
+        "summaryAvailable": bool(summary_rows),
+        "summary": summary,
+        "summaryFile": _file_meta(summary_path),
+        "goldenDataset": {
+            **_file_meta(_resolve_workspace_file("golden_dataset.csv")),
+            "rows": _csv_row_count(_resolve_workspace_file("golden_dataset.csv")),
+        },
+        "chartFile": _file_meta(_resolve_workspace_file("evaluation_summary.png")),
+        "resultFiles": _list_matching_files(["evaluation_"]),
+    }
+
+
+def _audit_dashboard_payload() -> Dict[str, Any]:
+    audit_csv_path = _resolve_workspace_file("priority_data_audit.csv")
+    rows = _read_csv_rows(audit_csv_path)
+    priority_summary: Dict[str, Dict[str, Any]] = {}
+    overall_coverage_values: List[float] = []
+    for row in rows:
+        priority = str(row.get("priority", "")).strip() or "Unknown"
+        coverage = _safe_float(row.get("coverage_pct"))
+        if coverage is None:
+            continue
+        overall_coverage_values.append(coverage)
+        bucket = priority_summary.setdefault(priority, {"count": 0, "avg_coverage_pct": 0.0, "below_60": 0, "_sum": 0.0})
+        bucket["count"] += 1
+        bucket["_sum"] += coverage
+        if coverage < 60:
+            bucket["below_60"] += 1
+
+    for bucket in priority_summary.values():
+        count = bucket["count"]
+        bucket["avg_coverage_pct"] = round((bucket["_sum"] / count) if count else 0.0, 1)
+        del bucket["_sum"]
+
+    low_coverage_rows = []
+    for row in rows:
+        coverage = _safe_float(row.get("coverage_pct"))
+        if coverage is None:
+            continue
+        low_coverage_rows.append({
+            "university": row.get("university", ""),
+            "priority": row.get("priority", ""),
+            "coverage_pct": coverage,
+            "programme_title": row.get("programme_title", ""),
+            "sql_missing_fields": row.get("sql_missing_fields", ""),
+            "kb_missing_fields": row.get("kb_missing_fields", ""),
+        })
+    low_coverage_rows.sort(key=lambda item: item["coverage_pct"])
+
+    return {
+        "auditAvailable": bool(rows),
+        "summary": {
+            "total_rows": len(rows),
+            "avg_coverage_pct": round(sum(overall_coverage_values) / len(overall_coverage_values), 1) if overall_coverage_values else 0.0,
+            "below_60_count": sum(1 for value in overall_coverage_values if value < 60),
+        },
+        "prioritySummary": [
+            {
+                "priority": priority,
+                "count": values["count"],
+                "avg_coverage_pct": values["avg_coverage_pct"],
+                "below_60": values["below_60"],
+            }
+            for priority, values in sorted(priority_summary.items())
+        ],
+        "lowestCoverageRows": low_coverage_rows[:12],
+        "auditFile": {
+            **_file_meta(audit_csv_path),
+            "rows": len(rows),
+        },
+        "auditFiles": _list_matching_files(["priority_data_audit", "audit_"]),
+    }
 
 
 def _render_ui_html() -> str:
@@ -816,7 +998,82 @@ def _render_ui_html() -> str:
 
                 <div id="adminTab-evaluation" class="admin-tab">
                     <h2 class="admin-page-title">Model Evaluation</h2>
-                    <div class="admin-stat-row" id="adminEvaluationStats"></div>
+                    <div class="admin-stat-row" id="adminEvaluationQuickStats"></div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">Evaluation controls</div>
+                        <div class="admin-panel-body">
+                            <div class="admin-row-actions" style="margin-bottom:10px;">
+                                <button class="admin-mini-btn approve" onclick="adminRunEvaluation()">Run evaluation script</button>
+                                <button class="admin-mini-btn" onclick="adminDownloadEvaluationSummary()">Download summary CSV</button>
+                            </div>
+                            <div class="admin-form-row">
+                                <div class="auth-field" style="margin-bottom:0;">
+                                    <label>Upload golden dataset (CSV)</label>
+                                    <input id="evalGoldenFile" type="file" accept=".csv" />
+                                </div>
+                            </div>
+                            <div class="admin-row-actions" style="margin-bottom:10px;">
+                                <button class="admin-mini-btn" onclick="adminUploadGoldenDataset()">Upload & replace golden_dataset.csv</button>
+                            </div>
+                            <div class="auth-error" id="evalActionError"></div>
+                            <div id="evalActionSuccess" style="display:none;font-size:12px;color:var(--accent-strong);margin-top:8px;"></div>
+                        </div>
+                    </div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">Evaluation metrics</div>
+                        <div class="admin-panel-body">
+                            <div id="adminEvaluationStats"></div>
+                        </div>
+                    </div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">Evaluation output files</div>
+                        <div class="admin-panel-body" id="adminEvaluationFiles" style="font-size:12px;color:var(--muted);"></div>
+                    </div>
+
+                    <h2 class="admin-page-title" style="margin-top:24px;">Data Audit</h2>
+                    <div class="admin-stat-row" id="adminAuditStats"></div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">Audit controls</div>
+                        <div class="admin-panel-body">
+                            <div class="admin-row-actions" style="margin-bottom:10px;">
+                                <button class="admin-mini-btn approve" onclick="adminRunAudit()">Run audit script</button>
+                                <button class="admin-mini-btn" onclick="adminDownloadAuditCsv()">Download audit CSV</button>
+                            </div>
+                            <div class="admin-form-row">
+                                <div class="auth-field" style="margin-bottom:0;">
+                                    <label>Upload audit CSV override</label>
+                                    <input id="auditUploadFile" type="file" accept=".csv" />
+                                </div>
+                            </div>
+                            <div class="admin-row-actions" style="margin-bottom:10px;">
+                                <button class="admin-mini-btn" onclick="adminUploadAuditCsv()">Upload & replace priority_data_audit.csv</button>
+                            </div>
+                            <div class="auth-error" id="auditActionError"></div>
+                            <div id="auditActionSuccess" style="display:none;font-size:12px;color:var(--accent-strong);margin-top:8px;"></div>
+                        </div>
+                    </div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">Priority coverage summary</div>
+                        <div class="admin-panel-body" style="overflow-x:auto">
+                            <table class="admin-table">
+                                <thead><tr><th>Priority</th><th>Universities</th><th>Avg coverage</th><th>Below 60%</th></tr></thead>
+                                <tbody id="adminAuditPriorityBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">Lowest coverage rows</div>
+                        <div class="admin-panel-body" style="overflow-x:auto">
+                            <table class="admin-table">
+                                <thead><tr><th>University</th><th>Priority</th><th>Coverage</th><th>Programme</th></tr></thead>
+                                <tbody id="adminAuditLowestBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="admin-panel">
+                        <div class="admin-panel-head">Audit files in directory</div>
+                        <div class="admin-panel-body" id="adminAuditFiles" style="font-size:12px;color:var(--muted);"></div>
+                    </div>
                 </div>
 
                 <div id="adminTab-system" class="admin-tab">
@@ -884,6 +1141,7 @@ def _render_ui_html() -> str:
             document.getElementById('adminUserLabel').textContent = displayName;
             loadAdminOverview();
             loadKbSources();
+            loadEvaluationDashboard();
         }}
 
         function enterApp(user) {{
@@ -897,6 +1155,9 @@ def _render_ui_html() -> str:
         function showAdminTab(tab) {{
             document.querySelectorAll('.admin-tab').forEach((el) => el.classList.toggle('active', el.id === `adminTab-${{tab}}`));
             document.querySelectorAll('.admin-nav-item').forEach((el) => el.classList.toggle('active', el.dataset.tab === tab));
+            if (tab === 'evaluation') {{
+                loadEvaluationDashboard();
+            }}
         }}
 
         function statCard(label, value) {{
@@ -956,7 +1217,9 @@ def _render_ui_html() -> str:
                 ].join('');
 
                 const e = data.evaluation || {{}};
-                document.getElementById('adminEvaluationStats').innerHTML = e.available === false
+                const quickStatsEl = document.getElementById('adminEvaluationQuickStats');
+                if (quickStatsEl) {{
+                    quickStatsEl.innerHTML = e.available === false
                     ? '<p style="font-size:12px;color:var(--muted)">No evaluation summary has been generated yet.</p>'
                     : [
                         statCard('Total questions', e.total_questions ?? 'N/A'),
@@ -967,6 +1230,7 @@ def _render_ui_html() -> str:
                         statCard('Avg precision', e.avg_context_precision ?? 'N/A'),
                         statCard('Avg recall', e.avg_context_recall ?? 'N/A'),
                     ].join('');
+                }}
 
                 const s = data.system || {{}};
                 document.getElementById('adminSystemStats').innerHTML = [
@@ -1167,6 +1431,299 @@ def _render_ui_html() -> str:
                 loadKbSources();
             }} catch (error) {{
                 setAuthError('kbUploadError', `Unable to reach the admissions service: ${{error.message}}`);
+            }}
+        }}
+
+        function formatPercent(value) {{
+            const num = Number(value);
+            if (Number.isNaN(num)) return '0.0%';
+            return `${{(num * 100).toFixed(1)}}%`;
+        }}
+
+        function formatSize(bytes) {{
+            const value = Number(bytes) || 0;
+            if (value < 1024) return `${{value}} B`;
+            if (value < 1024 * 1024) return `${{(value / 1024).toFixed(1)}} KB`;
+            return `${{(value / (1024 * 1024)).toFixed(2)}} MB`;
+        }}
+
+        function renderEvaluationDetails(payload) {{
+            const summary = payload.summary || {{}};
+            const summaryAvailable = Boolean(payload.summaryAvailable);
+            const metricsEl = document.getElementById('adminEvaluationStats');
+            if (metricsEl) {{
+                if (!summaryAvailable) {{
+                    metricsEl.innerHTML = '<p style="font-size:12px;color:var(--muted)">No evaluation summary generated yet. Run the evaluation script first.</p>';
+                }} else {{
+                    const metricRows = [
+                        ['Confidence', summary.avg_confidence_score],
+                        ['Faithfulness', summary.avg_faithfulness],
+                        ['Answer relevancy', summary.avg_answer_relevancy],
+                        ['Context precision', summary.avg_context_precision],
+                        ['Context recall', summary.avg_context_recall],
+                    ];
+                    metricsEl.innerHTML = metricRows.map(([label, value]) => {{
+                        const safe = Math.max(0, Math.min(1, Number(value || 0)));
+                        return `
+                            <div style="margin-bottom:10px;">
+                                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+                                    <strong>${{escapeHtml(label)}}</strong>
+                                    <span>${{escapeHtml(formatPercent(safe))}}</span>
+                                </div>
+                                <div style="height:8px;border-radius:4px;background:var(--soft);overflow:hidden;">
+                                    <div style="height:100%;width:${{(safe * 100).toFixed(1)}}%;background:var(--accent-strong);"></div>
+                                </div>
+                            </div>
+                        `;
+                    }}).join('');
+                }}
+            }}
+
+            const filesEl = document.getElementById('adminEvaluationFiles');
+            if (filesEl) {{
+                const resultFiles = payload.resultFiles || [];
+                const summaryMeta = payload.summaryFile || {{}};
+                const goldenMeta = payload.goldenDataset || {{}};
+                filesEl.innerHTML = `
+                    <div style="margin-bottom:8px;">
+                        <strong>Summary:</strong>
+                        ${{summaryMeta.exists ? `evaluation_summary.csv · ${{formatSize(summaryMeta.sizeBytes)}} · ${{escapeHtml(summaryMeta.updatedAt || 'unknown')}}` : 'Missing'}}
+                    </div>
+                    <div style="margin-bottom:8px;">
+                        <strong>Golden dataset:</strong>
+                        ${{goldenMeta.exists ? `golden_dataset.csv · ${{goldenMeta.rows || 0}} rows · ${{escapeHtml(goldenMeta.updatedAt || 'unknown')}}` : 'Missing'}}
+                    </div>
+                    <div><strong>Detected evaluation files:</strong></div>
+                    <ul style="margin:6px 0 0 16px;padding:0;">
+                        ${{resultFiles.length ? resultFiles.map((f) => `<li>${{escapeHtml(f.name)}} · ${{formatSize(f.sizeBytes)}} · ${{escapeHtml(f.updatedAt)}}</li>`).join('') : '<li>No evaluation files found.</li>'}}
+                    </ul>
+                `;
+            }}
+        }}
+
+        function renderAuditDetails(payload) {{
+            const summary = payload.summary || {{}};
+            const auditStatsEl = document.getElementById('adminAuditStats');
+            if (auditStatsEl) {{
+                auditStatsEl.innerHTML = [
+                    statCard('Audit rows', summary.total_rows ?? 0),
+                    statCard('Avg coverage', `${{summary.avg_coverage_pct ?? 0}}%`),
+                    statCard('Below 60%', summary.below_60_count ?? 0),
+                    statCard('Audit ready', payload.auditAvailable ? 'Yes' : 'No'),
+                ].join('');
+            }}
+
+            const priorityBody = document.getElementById('adminAuditPriorityBody');
+            if (priorityBody) {{
+                const priorities = payload.prioritySummary || [];
+                priorityBody.innerHTML = priorities.length
+                    ? priorities.map((row) => `
+                        <tr>
+                            <td>${{escapeHtml(row.priority)}}</td>
+                            <td>${{escapeHtml(row.count)}}</td>
+                            <td>${{escapeHtml(String(row.avg_coverage_pct))}}%</td>
+                            <td>${{escapeHtml(row.below_60)}}</td>
+                        </tr>
+                    `).join('')
+                    : '<tr><td colspan="4">No audit priority summary available.</td></tr>';
+            }}
+
+            const lowestBody = document.getElementById('adminAuditLowestBody');
+            if (lowestBody) {{
+                const rows = payload.lowestCoverageRows || [];
+                lowestBody.innerHTML = rows.length
+                    ? rows.map((row) => `
+                        <tr>
+                            <td>${{escapeHtml(row.university || '—')}}</td>
+                            <td>${{escapeHtml(row.priority || '—')}}</td>
+                            <td>${{escapeHtml(String(row.coverage_pct))}}%</td>
+                            <td>${{escapeHtml(row.programme_title || '—')}}</td>
+                        </tr>
+                    `).join('')
+                    : '<tr><td colspan="4">No low-coverage rows available.</td></tr>';
+            }}
+
+            const filesEl = document.getElementById('adminAuditFiles');
+            if (filesEl) {{
+                const auditFiles = payload.auditFiles || [];
+                const auditMeta = payload.auditFile || {{}};
+                filesEl.innerHTML = `
+                    <div style="margin-bottom:8px;">
+                        <strong>Primary audit file:</strong>
+                        ${{auditMeta.exists ? `priority_data_audit.csv · ${{auditMeta.rows || 0}} rows · ${{escapeHtml(auditMeta.updatedAt || 'unknown')}}` : 'Missing'}}
+                    </div>
+                    <div><strong>Detected audit files:</strong></div>
+                    <ul style="margin:6px 0 0 16px;padding:0;">
+                        ${{auditFiles.length ? auditFiles.map((f) => `<li>${{escapeHtml(f.name)}} · ${{formatSize(f.sizeBytes)}} · ${{escapeHtml(f.updatedAt)}}</li>`).join('') : '<li>No audit files found.</li>'}}
+                    </ul>
+                `;
+            }}
+        }}
+
+        async function loadEvaluationDashboard() {{
+            try {{
+                const [evalResponse, auditResponse] = await Promise.all([
+                    fetch('/api/admin/evaluation', {{ headers: authHeaders() }}),
+                    fetch('/api/admin/audit', {{ headers: authHeaders() }}),
+                ]);
+                const evalPayload = await evalResponse.json();
+                const auditPayload = await auditResponse.json();
+                if (!evalResponse.ok) throw new Error(evalPayload.detail || evalPayload.error || 'Unable to load evaluation data.');
+                if (!auditResponse.ok) throw new Error(auditPayload.detail || auditPayload.error || 'Unable to load audit data.');
+                renderEvaluationDetails(evalPayload);
+                renderAuditDetails(auditPayload);
+            }} catch (error) {{
+                const metricsEl = document.getElementById('adminEvaluationStats');
+                if (metricsEl) metricsEl.innerHTML = `<p style="font-size:12px;color:#B91C1C;">${{escapeHtml(error.message)}}</p>`;
+            }}
+        }}
+
+        async function adminRunEvaluation() {{
+            setAuthError('evalActionError', '');
+            document.getElementById('evalActionSuccess').style.display = 'none';
+            try {{
+                const response = await fetch('/api/admin/evaluation/run', {{
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({{}}),
+                }});
+                const result = await response.json();
+                if (!response.ok || !result.ok) {{
+                    setAuthError('evalActionError', result.detail || result.error || 'Failed to run evaluation script.');
+                    return;
+                }}
+                if (result.dashboard) renderEvaluationDetails(result.dashboard);
+                const successEl = document.getElementById('evalActionSuccess');
+                successEl.style.display = 'block';
+                successEl.textContent = 'Evaluation script completed successfully.';
+                loadAdminOverview();
+            }} catch (error) {{
+                setAuthError('evalActionError', `Unable to run evaluation: ${{error.message}}`);
+            }}
+        }}
+
+        async function adminUploadGoldenDataset() {{
+            const fileInput = document.getElementById('evalGoldenFile');
+            const file = fileInput.files[0];
+            setAuthError('evalActionError', '');
+            document.getElementById('evalActionSuccess').style.display = 'none';
+            if (!file) {{
+                setAuthError('evalActionError', 'Choose a golden dataset CSV to upload.');
+                return;
+            }}
+            const formData = new FormData();
+            formData.append('file', file);
+            try {{
+                const response = await fetch('/api/admin/evaluation/upload-golden', {{
+                    method: 'POST',
+                    headers: {{ 'Authorization': authHeaders().Authorization }},
+                    body: formData,
+                }});
+                const result = await response.json();
+                if (!response.ok || !result.ok) {{
+                    setAuthError('evalActionError', result.detail || result.error || 'Golden dataset upload failed.');
+                    return;
+                }}
+                fileInput.value = '';
+                if (result.dashboard) renderEvaluationDetails(result.dashboard);
+                const successEl = document.getElementById('evalActionSuccess');
+                successEl.style.display = 'block';
+                successEl.textContent = `Uploaded golden_dataset.csv (${{result.rows || 0}} rows).`;
+            }} catch (error) {{
+                setAuthError('evalActionError', `Unable to upload golden dataset: ${{error.message}}`);
+            }}
+        }}
+
+        async function adminDownloadEvaluationSummary() {{
+            try {{
+                const response = await fetch('/api/admin/evaluation/download-summary', {{ headers: authHeaders() }});
+                if (!response.ok) {{
+                    const payload = await response.json();
+                    throw new Error(payload.detail || 'Unable to download evaluation summary.');
+                }}
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'evaluation_summary.csv';
+                link.click();
+                URL.revokeObjectURL(url);
+            }} catch (error) {{
+                setAuthError('evalActionError', error.message);
+            }}
+        }}
+
+        async function adminRunAudit() {{
+            setAuthError('auditActionError', '');
+            document.getElementById('auditActionSuccess').style.display = 'none';
+            try {{
+                const response = await fetch('/api/admin/audit/run', {{
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({{}}),
+                }});
+                const result = await response.json();
+                if (!response.ok || !result.ok) {{
+                    setAuthError('auditActionError', result.detail || result.error || 'Failed to run audit script.');
+                    return;
+                }}
+                if (result.dashboard) renderAuditDetails(result.dashboard);
+                const successEl = document.getElementById('auditActionSuccess');
+                successEl.style.display = 'block';
+                successEl.textContent = 'Audit script completed successfully.';
+            }} catch (error) {{
+                setAuthError('auditActionError', `Unable to run audit: ${{error.message}}`);
+            }}
+        }}
+
+        async function adminUploadAuditCsv() {{
+            const fileInput = document.getElementById('auditUploadFile');
+            const file = fileInput.files[0];
+            setAuthError('auditActionError', '');
+            document.getElementById('auditActionSuccess').style.display = 'none';
+            if (!file) {{
+                setAuthError('auditActionError', 'Choose an audit CSV file to upload.');
+                return;
+            }}
+            const formData = new FormData();
+            formData.append('file', file);
+            try {{
+                const response = await fetch('/api/admin/audit/upload', {{
+                    method: 'POST',
+                    headers: {{ 'Authorization': authHeaders().Authorization }},
+                    body: formData,
+                }});
+                const result = await response.json();
+                if (!response.ok || !result.ok) {{
+                    setAuthError('auditActionError', result.detail || result.error || 'Audit CSV upload failed.');
+                    return;
+                }}
+                fileInput.value = '';
+                if (result.dashboard) renderAuditDetails(result.dashboard);
+                const successEl = document.getElementById('auditActionSuccess');
+                successEl.style.display = 'block';
+                successEl.textContent = `Uploaded priority_data_audit.csv (${{result.rows || 0}} rows).`;
+            }} catch (error) {{
+                setAuthError('auditActionError', `Unable to upload audit CSV: ${{error.message}}`);
+            }}
+        }}
+
+        async function adminDownloadAuditCsv() {{
+            try {{
+                const response = await fetch('/api/admin/audit/download', {{ headers: authHeaders() }});
+                if (!response.ok) {{
+                    const payload = await response.json();
+                    throw new Error(payload.detail || 'Unable to download audit CSV.');
+                }}
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'priority_data_audit.csv';
+                link.click();
+                URL.revokeObjectURL(url);
+            }} catch (error) {{
+                setAuthError('auditActionError', error.message);
             }}
         }}
 
@@ -1904,6 +2461,76 @@ async def api_admin_kb_upload(
     _check_api_key(authorization)
     content = await file.read()
     return admin_kb.save_uploaded_csv(target, content)
+
+
+@app.get("/api/admin/evaluation")
+def api_admin_evaluation(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    return _evaluation_dashboard_payload()
+
+
+@app.post("/api/admin/evaluation/run")
+def api_admin_run_evaluation(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    result = _run_workspace_script(EVALUATION_SCRIPT, timeout=420)
+    result["dashboard"] = _evaluation_dashboard_payload()
+    return result
+
+
+@app.post("/api/admin/evaluation/upload-golden")
+async def api_admin_upload_golden_dataset(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    content = await file.read()
+    upload = admin_kb.save_uploaded_csv("golden_dataset.csv", content)
+    upload["dashboard"] = _evaluation_dashboard_payload()
+    return upload
+
+
+@app.get("/api/admin/evaluation/download-summary")
+def api_admin_download_evaluation_summary(authorization: Optional[str] = Header(default=None)) -> FileResponse:
+    _check_api_key(authorization)
+    summary_path = _resolve_workspace_file("evaluation_summary.csv")
+    if not os.path.exists(summary_path):
+        raise HTTPException(status_code=404, detail="evaluation_summary.csv was not found.")
+    return FileResponse(path=summary_path, media_type="text/csv", filename="evaluation_summary.csv")
+
+
+@app.get("/api/admin/audit")
+def api_admin_audit(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    return _audit_dashboard_payload()
+
+
+@app.post("/api/admin/audit/run")
+def api_admin_run_audit(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    result = _run_workspace_script(DATA_AUDIT_SCRIPT, timeout=420)
+    result["dashboard"] = _audit_dashboard_payload()
+    return result
+
+
+@app.post("/api/admin/audit/upload")
+async def api_admin_upload_audit_file(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    _check_api_key(authorization)
+    content = await file.read()
+    upload = admin_kb.save_uploaded_csv("priority_data_audit.csv", content)
+    upload["dashboard"] = _audit_dashboard_payload()
+    return upload
+
+
+@app.get("/api/admin/audit/download")
+def api_admin_download_audit_csv(authorization: Optional[str] = Header(default=None)) -> FileResponse:
+    _check_api_key(authorization)
+    csv_path = _resolve_workspace_file("priority_data_audit.csv")
+    if not os.path.exists(csv_path):
+        raise HTTPException(status_code=404, detail="priority_data_audit.csv was not found.")
+    return FileResponse(path=csv_path, media_type="text/csv", filename="priority_data_audit.csv")
 
 
 @app.get("/api/summary")

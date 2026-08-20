@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useAuth } from "../../auth";
 import UsersPanel from "./UsersPanel";
 import KnowledgeBase from "./KnowledgeBase";
@@ -7,7 +7,7 @@ import SystemPanel from "./SystemPanel";
 
 type AdminTab = "users" | "knowledge" | "evaluation" | "system";
 
-const NAV: { id: AdminTab; label: string; icon: JSX.Element; desc: string }[] = [
+const NAV: { id: AdminTab; label: string; icon: ReactNode; desc: string }[] = [
   {
     id: "users",
     label: "User Management",

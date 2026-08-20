@@ -1,2 +1,2 @@
 total_questions,avg_confidence_score,abstain_count,avg_faithfulness,avg_answer_relevancy,avg_context_precision,avg_context_recall
-12,0.8083,1,0.1342,0.0559,0.4041,0.4334
+50,0.852,2,0.0487,0.0316,0.504,0.5138
