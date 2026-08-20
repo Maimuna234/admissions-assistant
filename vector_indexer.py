@@ -38,14 +38,28 @@ class VectorIndexingPipeline:
             metric_source_url = references.get("metric_source_url", source_url)
             layer_sources = references.get("layer_sources", {})
             
-            # Extract and stringify quantitative metrics to create a baseline profile chunk
-            metrics = entry["metrics"]
+            # Extract and stringify quantitative metrics to create a baseline profile chunk.
+            metrics = entry.get("metrics", {}) or {}
+            fee_uk = metrics.get("annual_tuition_fee_uk", "Not stated")
+            employability = metrics.get("graduate_in_work_15_months_pct", "Not stated")
+            leo_salary = metrics.get("leo_median_salary_3_years", "Not stated")
+
+            if isinstance(fee_uk, (int, float)):
+                fee_uk_text = f"£{fee_uk:,}"
+            else:
+                fee_uk_text = str(fee_uk)
+            if isinstance(leo_salary, (int, float)):
+                leo_salary_text = f"£{leo_salary:,}"
+            else:
+                leo_salary_text = str(leo_salary)
+            employability_text = f"{employability}%" if isinstance(employability, (int, float)) else str(employability)
+
             metrics_text = (
                 f"Statistical Profile for {uni_name} ({course_code}): "
-                f"Annual tuition fee is £{metrics['annual_tuition_fee_uk']:,}. "
+                f"Annual tuition fee is {fee_uk_text}. "
                 f"Percentage of graduates in professional employment or further study "
-                f"after 15 months is {metrics['graduate_in_work_15_months_pct']}%. "
-                f"The Longitudinal Education Outcomes (LEO) median salary after 3 years is £{metrics['leo_median_salary_3_years']:,}."
+                f"after 15 months is {employability_text}. "
+                f"The Longitudinal Education Outcomes (LEO) median salary after 3 years is {leo_salary_text}."
             )
             
             # Base metadata assigned to every chunk from this institution

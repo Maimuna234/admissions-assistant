@@ -10,34 +10,34 @@
   "programme_keyword": "computer science",
   "priority_summary": {
     "Entry Requirements": {
-      "count": 14,
-      "below_60": 5,
-      "avg_coverage_pct": 47.1
+      "count": 13,
+      "below_60": 2,
+      "avg_coverage_pct": 53.8
     },
     "Curriculum & Accreditation": {
-      "count": 14,
-      "below_60": 5,
-      "avg_coverage_pct": 68.8
+      "count": 13,
+      "below_60": 4,
+      "avg_coverage_pct": 74.0
     },
     "Graduate Outcomes & Salary": {
-      "count": 14,
-      "below_60": 3,
-      "avg_coverage_pct": 72.3
+      "count": 13,
+      "below_60": 2,
+      "avg_coverage_pct": 79.8
     },
     "Fees & Cost": {
-      "count": 14,
-      "below_60": 4,
-      "avg_coverage_pct": 73.8
+      "count": 13,
+      "below_60": 1,
+      "avg_coverage_pct": 94.9
     },
     "Teaching Quality & NSS": {
-      "count": 14,
-      "below_60": 4,
-      "avg_coverage_pct": 69.4
+      "count": 13,
+      "below_60": 3,
+      "avg_coverage_pct": 75.8
     },
     "University Rankings": {
-      "count": 14,
-      "below_60": 4,
-      "avg_coverage_pct": 47.6
+      "count": 13,
+      "below_60": 3,
+      "avg_coverage_pct": 56.4
     }
   },
   "rows": [
@@ -201,13 +201,12 @@
       "programme_title": "Computer Science",
       "programme_matches_keyword": true,
       "priority": "Teaching Quality & NSS",
-      "coverage_pct": 14.3,
-      "available_fields": 1,
+      "coverage_pct": 28.6,
+      "available_fields": 2,
       "required_fields": 7,
-      "sql_fields_present": 0,
+      "sql_fields_present": 1,
       "kb_fields_present": 1,
       "sql_missing_fields": [
-        "nss_teaching_satisfaction",
         "nss_mental_wellbeing",
         "nss_facilities_resources",
         "tef_overall_rating",
@@ -411,9 +410,9 @@
       "kb_missing_fields": []
     },
     {
-      "university": "Queen Mary University London",
-      "programme_title": "",
-      "programme_matches_keyword": false,
+      "university": "Queen Mary University of London",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
       "priority": "Entry Requirements",
       "coverage_pct": 20.0,
       "available_fields": 1,
@@ -429,9 +428,9 @@
       "kb_missing_fields": []
     },
     {
-      "university": "Queen Mary University London",
-      "programme_title": "",
-      "programme_matches_keyword": false,
+      "university": "Queen Mary University of London",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
       "priority": "Curriculum & Accreditation",
       "coverage_pct": 50.0,
       "available_fields": 4,
@@ -447,20 +446,18 @@
       "kb_missing_fields": []
     },
     {
-      "university": "Queen Mary University London",
-      "programme_title": "",
-      "programme_matches_keyword": false,
+      "university": "Queen Mary University of London",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
       "priority": "Graduate Outcomes & Salary",
-      "coverage_pct": 25.0,
-      "available_fields": 2,
+      "coverage_pct": 50.0,
+      "available_fields": 4,
       "required_fields": 8,
-      "sql_fields_present": 0,
+      "sql_fields_present": 2,
       "kb_fields_present": 2,
       "sql_missing_fields": [
         "median_salary_leo3",
         "median_salary_leo5",
-        "median_salary_go",
-        "employment_rate_15m",
         "pct_professional_managerial"
       ],
       "kb_missing_fields": [
@@ -468,25 +465,22 @@
       ]
     },
     {
-      "university": "Queen Mary University London",
-      "programme_title": "",
-      "programme_matches_keyword": false,
+      "university": "Queen Mary University of London",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
       "priority": "Fees & Cost",
-      "coverage_pct": 33.3,
-      "available_fields": 1,
+      "coverage_pct": 100.0,
+      "available_fields": 3,
       "required_fields": 3,
-      "sql_fields_present": 0,
+      "sql_fields_present": 2,
       "kb_fields_present": 1,
-      "sql_missing_fields": [
-        "tuition_fee_uk",
-        "tuition_fee_intl"
-      ],
+      "sql_missing_fields": [],
       "kb_missing_fields": []
     },
     {
-      "university": "Queen Mary University London",
-      "programme_title": "",
-      "programme_matches_keyword": false,
+      "university": "Queen Mary University of London",
+      "programme_title": "Computer Science",
+      "programme_matches_keyword": true,
       "priority": "Teaching Quality & NSS",
       "coverage_pct": 14.3,
       "available_fields": 1,
@@ -502,126 +496,6 @@
       ],
       "kb_missing_fields": [
         "student_support"
-      ]
-    },
-    {
-      "university": "Queen Mary University London",
-      "programme_title": "",
-      "programme_matches_keyword": false,
-      "priority": "University Rankings",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
-      "required_fields": 3,
-      "sql_fields_present": 0,
-      "kb_fields_present": 0,
-      "sql_missing_fields": [
-        "guardian_rank",
-        "cug_rank",
-        "qs_rank"
-      ],
-      "kb_missing_fields": []
-    },
-    {
-      "university": "Queen Mary University of London",
-      "programme_title": "Computer Science",
-      "programme_matches_keyword": true,
-      "priority": "Entry Requirements",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
-      "required_fields": 5,
-      "sql_fields_present": 0,
-      "kb_fields_present": 0,
-      "sql_missing_fields": [
-        "entry_tariff",
-        "alevel_requirement",
-        "pct_entrants_alevel",
-        "has_foundation_year"
-      ],
-      "kb_missing_fields": [
-        "entry_requirements"
-      ]
-    },
-    {
-      "university": "Queen Mary University of London",
-      "programme_title": "Computer Science",
-      "programme_matches_keyword": true,
-      "priority": "Curriculum & Accreditation",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
-      "required_fields": 8,
-      "sql_fields_present": 0,
-      "kb_fields_present": 0,
-      "sql_missing_fields": [
-        "bcs_accredited",
-        "has_placement_year",
-        "has_year_abroad",
-        "final_year_project_credits"
-      ],
-      "kb_missing_fields": [
-        "curriculum_year_1",
-        "curriculum_year_2",
-        "curriculum_year_3",
-        "industrial_placements"
-      ]
-    },
-    {
-      "university": "Queen Mary University of London",
-      "programme_title": "Computer Science",
-      "programme_matches_keyword": true,
-      "priority": "Graduate Outcomes & Salary",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
-      "required_fields": 8,
-      "sql_fields_present": 0,
-      "kb_fields_present": 0,
-      "sql_missing_fields": [
-        "median_salary_leo3",
-        "median_salary_leo5",
-        "median_salary_go",
-        "employment_rate_15m",
-        "pct_professional_managerial"
-      ],
-      "kb_missing_fields": [
-        "leo_median_salary_3_years",
-        "graduate_in_work_15_months_pct",
-        "career_outcomes"
-      ]
-    },
-    {
-      "university": "Queen Mary University of London",
-      "programme_title": "Computer Science",
-      "programme_matches_keyword": true,
-      "priority": "Fees & Cost",
-      "coverage_pct": 66.7,
-      "available_fields": 2,
-      "required_fields": 3,
-      "sql_fields_present": 2,
-      "kb_fields_present": 0,
-      "sql_missing_fields": [],
-      "kb_missing_fields": [
-        "annual_tuition_fee_uk"
-      ]
-    },
-    {
-      "university": "Queen Mary University of London",
-      "programme_title": "Computer Science",
-      "programme_matches_keyword": true,
-      "priority": "Teaching Quality & NSS",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
-      "required_fields": 7,
-      "sql_fields_present": 0,
-      "kb_fields_present": 0,
-      "sql_missing_fields": [
-        "nss_teaching_satisfaction",
-        "nss_mental_wellbeing",
-        "nss_facilities_resources",
-        "tef_overall_rating",
-        "tef_student_experience"
-      ],
-      "kb_missing_fields": [
-        "student_support",
-        "infrastructure_and_facilities"
       ]
     },
     {
@@ -733,18 +607,16 @@
       "programme_title": "Computer Science",
       "programme_matches_keyword": true,
       "priority": "Entry Requirements",
-      "coverage_pct": 40.0,
-      "available_fields": 2,
+      "coverage_pct": 60.0,
+      "available_fields": 3,
       "required_fields": 5,
       "sql_fields_present": 2,
-      "kb_fields_present": 0,
+      "kb_fields_present": 1,
       "sql_missing_fields": [
         "entry_tariff",
         "alevel_requirement"
       ],
-      "kb_missing_fields": [
-        "entry_requirements"
-      ]
+      "kb_missing_fields": []
     },
     {
       "university": "University of Bristol",
@@ -788,18 +660,13 @@
       "programme_title": "Computer Science",
       "programme_matches_keyword": true,
       "priority": "Fees & Cost",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
+      "coverage_pct": 100.0,
+      "available_fields": 3,
       "required_fields": 3,
-      "sql_fields_present": 0,
-      "kb_fields_present": 0,
-      "sql_missing_fields": [
-        "tuition_fee_uk",
-        "tuition_fee_intl"
-      ],
-      "kb_missing_fields": [
-        "annual_tuition_fee_uk"
-      ]
+      "sql_fields_present": 2,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
     },
     {
       "university": "University of Bristol",
@@ -822,15 +689,14 @@
       "programme_title": "Computer Science",
       "programme_matches_keyword": true,
       "priority": "University Rankings",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
+      "coverage_pct": 33.3,
+      "available_fields": 1,
       "required_fields": 3,
-      "sql_fields_present": 0,
+      "sql_fields_present": 1,
       "kb_fields_present": 0,
       "sql_missing_fields": [
         "guardian_rank",
-        "cug_rank",
-        "qs_rank"
+        "cug_rank"
       ],
       "kb_missing_fields": []
     },
@@ -839,18 +705,16 @@
       "programme_title": "Artificial Intelligence and Computer Science",
       "programme_matches_keyword": true,
       "priority": "Entry Requirements",
-      "coverage_pct": 40.0,
-      "available_fields": 2,
+      "coverage_pct": 60.0,
+      "available_fields": 3,
       "required_fields": 5,
       "sql_fields_present": 2,
-      "kb_fields_present": 0,
+      "kb_fields_present": 1,
       "sql_missing_fields": [
         "entry_tariff",
         "alevel_requirement"
       ],
-      "kb_missing_fields": [
-        "entry_requirements"
-      ]
+      "kb_missing_fields": []
     },
     {
       "university": "The University of Edinburgh",
@@ -894,18 +758,13 @@
       "programme_title": "Artificial Intelligence and Computer Science",
       "programme_matches_keyword": true,
       "priority": "Fees & Cost",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
+      "coverage_pct": 100.0,
+      "available_fields": 3,
       "required_fields": 3,
-      "sql_fields_present": 0,
-      "kb_fields_present": 0,
-      "sql_missing_fields": [
-        "tuition_fee_uk",
-        "tuition_fee_intl"
-      ],
-      "kb_missing_fields": [
-        "annual_tuition_fee_uk"
-      ]
+      "sql_fields_present": 2,
+      "kb_fields_present": 1,
+      "sql_missing_fields": [],
+      "kb_missing_fields": []
     },
     {
       "university": "The University of Edinburgh",
@@ -931,15 +790,14 @@
       "programme_title": "Artificial Intelligence and Computer Science",
       "programme_matches_keyword": true,
       "priority": "University Rankings",
-      "coverage_pct": 0.0,
-      "available_fields": 0,
+      "coverage_pct": 33.3,
+      "available_fields": 1,
       "required_fields": 3,
-      "sql_fields_present": 0,
+      "sql_fields_present": 1,
       "kb_fields_present": 0,
       "sql_missing_fields": [
         "guardian_rank",
-        "cug_rank",
-        "qs_rank"
+        "cug_rank"
       ],
       "kb_missing_fields": []
     },

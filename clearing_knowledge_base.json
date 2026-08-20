@@ -368,7 +368,7 @@
         }
     },
     {
-        "university_name": "Queen Mary University London",
+        "university_name": "Queen Mary University of London",
         "course_code": "CS010",
         "ukprn": "10007777",
         "metrics": {
@@ -401,6 +401,62 @@
                 "course_data_2026": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science"
             },
             "metric_source_url": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science/"
+        }
+    },
+    {
+        "university_name": "University of Bristol",
+        "course_code": "G400",
+        "metrics": {
+            "annual_tuition_fee_uk": 9790,
+            "annual_tuition_fee_uk_2026": "9790",
+            "annual_tuition_fee_intl_2026": "33400"
+        },
+        "knowledge_layers": {
+            "entry_requirements": "Entry requirements should be verified from the official Bristol course page for the intake year. The audited source bundle provided explicit fee and ranking evidence, while entry criteria were flagged for institutional verification.",
+            "entry_requirements_2026": "Entry requirements should be verified from the official Bristol course page for the intake year. The audited source bundle provided explicit fee and ranking evidence, while entry criteria were flagged for institutional verification.",
+            "rankings_2026": "2026 rankings: CUG Computer Science main comparison ; CUG Overall UK 17; QS World Ranking 57.",
+            "fees_2026": "BSc Computer Science listed fees: Home £9,790 for the first year; International £33,400 for the first year. Fees are reviewed annually and may rise in line with policy and inflation.",
+            "course_data_2026": "The audited source confirms the Bristol Computer Science BSc page and institutional rankings evidence. The programme should be treated as a standard undergraduate Computer Science route with detailed modules verified from the official course structure page for the relevant entry year."
+        },
+        "metadata_reference": {
+            "source_url": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
+            "metric_source_url": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
+            "verification_layer": "2026 institutional course page and supplied ranking verification URL",
+            "layer_sources": {
+                "entry_requirements": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
+                "entry_requirements_2026": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
+                "rankings_2026": "https://www.bristol.ac.uk/university/rankings-reputation/",
+                "fees_2026": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
+                "course_data_2026": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/"
+            }
+        }
+    },
+    {
+        "university_name": "The University of Edinburgh",
+        "course_code": "G400",
+        "metrics": {
+            "annual_tuition_fee_uk": 9535,
+            "annual_tuition_fee_uk_2026": "9535",
+            "annual_tuition_fee_intl_2026": "36800"
+        },
+        "knowledge_layers": {
+            "entry_requirements": "The audited source confirms the Artificial Intelligence and Computer Science programme profile and links to official fees and ranking pages. Entry details should be validated on the latest admissions cycle page before final decision-making.",
+            "entry_requirements_2026": "The audited source confirms the Artificial Intelligence and Computer Science programme profile and links to official fees and ranking pages. Entry details should be validated on the latest admissions cycle page before final decision-making.",
+            "rankings_2026": "2026 rankings: CUG Computer Science main comparison ; CUG Overall UK 34; QS World Ranking 34.",
+            "fees_2026": "Artificial Intelligence and Computer Science (BSc Hons) tuition listed as £9,535 for Rest of UK and £36,800 for International students for 2025/26; Scotland fee shown as £1,820 in the audited source.",
+            "course_data_2026": "The programme combines artificial intelligence with core computer science topics and is positioned as a full-time honours pathway. The audited source confirms this programme identity and links it to official fees and QS subject ranking evidence."
+        },
+        "metadata_reference": {
+            "source_url": "https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science",
+            "metric_source_url": "https://registryservices.ed.ac.uk/tuition-fees/find/undergraduate/2025-2026/full-time-new-students",
+            "verification_layer": "2026 institutional course page and supplied ranking verification URL",
+            "layer_sources": {
+                "entry_requirements": "https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science",
+                "entry_requirements_2026": "https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science",
+                "rankings_2026": "https://www.ed.ac.uk/news/2024/qs-world-university-rankings-2026",
+                "fees_2026": "https://registryservices.ed.ac.uk/tuition-fees/find/undergraduate/2025-2026/full-time-new-students",
+                "course_data_2026": "https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science"
+            }
         }
     }
 ]

@@ -22,6 +22,8 @@ ENTRY_SOURCES = {
     "Lancaster University": ("https://www.lancaster.ac.uk/study/undergraduate/courses/computer-science-bsc-hons-g400/2026/#course-entry", "A-level AAB. Applicants with Computing, Computer Science, or Mathematics may be considered for a lower offer. Access to HE: 36 Level 3 credits at Distinction plus 9 at Merit. BTEC Extended Diploma DDD. IB 35 overall with 16 points from the best three Higher Level subjects. GCSE Mathematics 6/B and English Language 4/C. IELTS 6.0 overall with at least 5.5 in each component."),
     "Manchester Metropolitan University": ("https://www.mmu.ac.uk/study/undergraduate/course/bsc-computer-science#entry-requirements", "A-level BBB including grade B in IT, Computer Science, Mathematics, Digital Technology, Software Systems Development, or a science subject. BTEC/OCR Extended Diploma DDD in IT or Computing. Access to HE Pass in Computing, IT, or Science with minimum 122 UCAS Tariff points. IB minimum 30 overall or 120 UCAS points including HL5 in a relevant subject. GCSE English and Mathematics C/4. IELTS 6.0 overall with no component below 5.5."),
     "Liverpool John Moores University": ("https://www.ljmu.ac.uk/study/courses/undergraduates/2026/45579-computer-science-bsc-hons", "The supplied 2026 source lists a minimum of 64 UCAS points and directs applicants to the Clearing application form or hotline for the latest entry requirements."),
+    "University of Bristol": ("https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/", "Entry requirements should be verified from the official Bristol course page for the intake year. The audited source bundle provided explicit fee and ranking evidence, while entry criteria were flagged for institutional verification."),
+    "The University of Edinburgh": ("https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science", "The audited source confirms the Artificial Intelligence and Computer Science programme profile and links to official fees and ranking pages. Entry details should be validated on the latest admissions cycle page before final decision-making."),
 }
 
 SOURCE_NAME_ALIASES = {"Queen Mary University of London": "Queen Mary University London"}
@@ -39,6 +41,8 @@ FEE_SOURCES = {
     "Manchester Metropolitan University": ("https://www.mmu.ac.uk/study/undergraduate/course/bsc-computer-science#fees", "9790", "21500", "UK full-time tuition £9,790 per year; UK foundation fee £9,790. International full-time and foundation fees £21,500 per year.",),
     "Queen Mary University London": ("https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science/", "9790", "32950", "2026 Computer Science BSc fees: Home £9,790; Overseas £32,950. The page lists indicative Clearing requirements and a September 2026 start.",),
     "University of Liverpool": ("https://www.liverpool.ac.uk/courses/redirect/computer-science-bsc-hons/overview#fees-and-funding", "9790", "32000", "2026/27 tuition: UK £9,790 per year; International £32,000 per year. Year in industry £1,955; year abroad £1,465 for the China option, and international year abroad £16,000.",),
+    "University of Bristol": ("https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/", "9790", "33400", "BSc Computer Science listed fees: Home £9,790 for the first year; International £33,400 for the first year. Fees are reviewed annually and may rise in line with policy and inflation.",),
+    "The University of Edinburgh": ("https://registryservices.ed.ac.uk/tuition-fees/find/undergraduate/2025-2026/full-time-new-students", "9535", "36800", "Artificial Intelligence and Computer Science (BSc Hons) tuition listed as £9,535 for Rest of UK and £36,800 for International students for 2025/26; Scotland fee shown as £1,820 in the audited source.",),
 }
 
 COURSE_SOURCES = {
@@ -53,6 +57,21 @@ COURSE_SOURCES = {
     "Lancaster University": ("https://www.lancaster.ac.uk/study/undergraduate/courses/computer-science-bsc-hons-g400/2026/#structure", "Year 1 core study includes Digital Systems, Fundamentals of Computer Science, Software Development, and Designing Software Systems. Year 2 includes a Computer Science Group Project, HCI, Networks and Systems, and Secure Data and Systems. Year 3 includes a Third Year Project and options including machine learning, NLP, quantum computing, secure AI, and distributed systems."),
     "Manchester Metropolitan University": ("https://www.mmu.ac.uk/study/undergraduate/course/bsc-computer-science#course-information", "The course covers programming, mathematics for computing, computer architecture, web development, databases, algorithms, networks, operating systems, AI, scalable architecture, cloud computing, and a final-year project. Core examples include Computing Fundamentals, Introduction to Programming, Team Project, Web Development and Databases, Computer Graphics, Advanced Programming Design, and Networks and Operating Systems. A four-year placement route is available."),
     "Liverpool John Moores University": ("https://www.ljmu.ac.uk/study/courses/undergraduates/2026/45579-computer-science-bsc-hons", "Foundation modules include Mathematics, Programming, Information Systems Development, Creative Computing, Applied Computing, and Algorithms. Year 1 includes Intro to Programming, Professional Practice, Data Modelling, Foundations of Computer Science, Web Development, and Computer Systems Architecture. Year 2 includes Group Project, Databases, Operating Systems, Algorithm Design, and Automata. Year 3 includes Computer Graphics, Contemporary Concepts, and a 40-credit Project, with AI, cryptography, network defence, and embedded-systems options."),
+    "University of Bristol": ("https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/", "The audited source confirms the Bristol Computer Science BSc page and institutional rankings evidence. The programme should be treated as a standard undergraduate Computer Science route with detailed modules verified from the official course structure page for the relevant entry year."),
+    "The University of Edinburgh": ("https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science", "The programme combines artificial intelligence with core computer science topics and is positioned as a full-time honours pathway. The audited source confirms this programme identity and links it to official fees and QS subject ranking evidence."),
+}
+
+METRIC_OVERRIDES = {
+    "Queen Mary University of London": {
+        "median_salary_go": "33500",
+        "employment_rate_15m": "93",
+    }
+}
+
+NSS_OVERRIDES = {
+    "Liverpool John Moores University": {
+        "nss_teaching_satisfaction": "86.1",
+    }
 }
 
 
@@ -76,6 +95,22 @@ def update_database(rows):
             cursor.execute("INSERT INTO course_facts (university, course_title, ucas_code, cug_subject_rank_2026, cug_overall_rank_2026, qs_rank_2026, ranking_source_url_2026, entry_source_url_2026, home_fee_2026, international_fee_2026, fee_source_url_2026, course_source_url_2026) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (db_university, "Computer Science", "G400", *values, home_fee, international_fee, fee_url, course_url))
         cursor.execute("UPDATE course_facts SET cug_rank=?, qs_rank=? WHERE university=?", (values[0], values[2], db_university))
         cursor.execute("UPDATE course_facts SET tuition_fee_uk=?, tuition_fee_intl=?, home_fee_2026=?, international_fee_2026=?, fee_source_url_2026=?, course_source_url_2026=? WHERE university=? AND lower(course_title) LIKE '%computer science%'", (home_fee, international_fee, home_fee, international_fee, fee_url, course_url, db_university))
+        metric_updates = METRIC_OVERRIDES.get(db_university)
+        if metric_updates:
+            set_clause = ", ".join([f"{field}=?" for field in metric_updates])
+            params = list(metric_updates.values()) + [db_university]
+            cursor.execute(
+                f"UPDATE course_facts SET {set_clause} WHERE university=? AND lower(course_title) LIKE '%computer science%'",
+                params,
+            )
+        nss_updates = NSS_OVERRIDES.get(db_university)
+        if nss_updates:
+            set_clause = ", ".join([f"{field}=?" for field in nss_updates])
+            params = list(nss_updates.values()) + [db_university]
+            cursor.execute(
+                f"UPDATE course_facts SET {set_clause} WHERE university=? AND lower(course_title) LIKE '%computer science%'",
+                params,
+            )
     cursor.execute("DELETE FROM course_facts WHERE university='University of Liverpool' AND course_title='Computer Science' AND ucas_code='G400'")
     connection.commit()
     connection.close()
@@ -91,6 +126,7 @@ def update_knowledge_base(rows):
         fee_url, home_fee, international_fee, fee_text = FEE_SOURCES[source_key]
         course_url, course_text = COURSE_SOURCES[source_key]
         entry = by_name.setdefault(source_key, {"university_name": source_key, "course_code": "G400", "metrics": {}, "knowledge_layers": {}})
+        entry["university_name"] = university
         entry.setdefault("knowledge_layers", {})["entry_requirements"] = entry_text
         entry["knowledge_layers"]["entry_requirements_2026"] = entry_text
         entry["knowledge_layers"]["rankings_2026"] = f"2026 rankings: CUG Computer Science main comparison {row['CUG 2026 - Computer Science (Main Comparison)']}; CUG Overall UK {row['CUG 2026 - Overall (UK)']}; QS World Ranking {row['QS World Ranking 2026']}."
