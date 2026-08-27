@@ -8,7 +8,7 @@
             "graduate_in_work_15_months_pct": 88.5,
             "leo_median_salary_3_years": 31000,
             "annual_tuition_fee_uk_2026": "9790",
-            "annual_tuition_fee_intl_2026": "Not stated"
+            "annual_tuition_fee_intl_2026": "37800"
         },
         "knowledge_layers": {
             "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
@@ -21,7 +21,7 @@
             "career_outcomes": "Career OutcomesStrong graduate employability with placement and internship pathways, supported by the university careers service.",
             "entry_requirements_2026": "A-level A*A*A including A* in Mathematics and at least one science subject. Contextual offer AAA. IB 38 overall with 7,7,6 at Higher Level including 7 in Mathematics: Analysis and Approaches. GCSE Mathematics and English Language normally B/6. IELTS 7.0 overall with no component below 6.5; TOEFL iBT 100 overall with no subscore below 22.",
             "rankings_2026": "2026 rankings: CUG Computer Science main comparison 12; CUG Overall UK 28; QS World Ranking 35.",
-            "fees_2026": "2026 home fee £9,790 per year; 2027 fees not yet set and expected to increase slightly. Additional compulsory costs above 1% of the annual home fee should be disclosed.",
+            "fees_2026": "2026/27 tuition: Home £9,790 per year (subject to Parliamentary approval); International £37,800 per year. The source notes that home fee caps may rise in subsequent years and international fees may increase by up to 7% per year.",
             "course_data_2026": "2026 Computer Science course units include First Year Team Project, Mathematical Techniques, Fundamentals of Computation, Computer Engineering, Data Science, Computer Architecture, Operating Systems, and Introduction to Programming. Year 2 includes Software Engineering, Programming Languages, Algorithms and Data Structures, with optional Logic, Microcontrollers, and Database Systems. Year 3 has a mandatory 40-credit project and specialist options including AI, robotics, IoT, agile pipelines, and machine learning."
         },
         "metadata_reference": {
@@ -31,10 +31,10 @@
                 "entry_requirements_2026": "https://www.manchester.ac.uk/study/undergraduate/courses/2026/00560/bsc-computer-science/",
                 "rankings_2026": "https://www.manchester.ac.uk/about/rankings/",
                 "entry_requirements": "https://www.manchester.ac.uk/study/undergraduate/courses/2026/00560/bsc-computer-science/",
-                "fees_2026": "https://www.manchester.ac.uk/study/undergraduate/courses/2027/00560/bsc-computer-science/",
+                "fees_2026": "https://www.manchester.ac.uk/study/undergraduate/courses/2026/00560/bsc-computer-science/",
                 "course_data_2026": "https://www.manchester.ac.uk/study/undergraduate/courses/2026/00560/bsc-computer-science/"
             },
-            "metric_source_url": "https://www.manchester.ac.uk/study/undergraduate/courses/2027/00560/bsc-computer-science/"
+            "metric_source_url": "https://www.manchester.ac.uk/study/undergraduate/courses/2026/00560/bsc-computer-science/"
         }
     },
     {
@@ -311,12 +311,14 @@
             "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
             "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
             "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
-            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments.",
+            "infrastructure_and_facilities": "LJMU Computer Science students benefit from specialist computing labs, over 400 workstations, access to software-rich teaching spaces, and a blended delivery model that combines in-person lab teaching with guided online support.",
             "entry_requirements_2026": "The supplied 2026 source lists a minimum of 64 UCAS points and directs applicants to the Clearing application form or hotline for the latest entry requirements.",
             "rankings_2026": "2026 rankings: CUG Computer Science main comparison 62; CUG Overall UK 76; QS World Ranking 851-900.",
             "entry_requirements": "The supplied 2026 source lists a minimum of 64 UCAS points and directs applicants to the Clearing application form or hotline for the latest entry requirements.",
             "fees_2026": "2026/27 home tuition £9,790 per year, subject to Parliamentary approval. Study abroad year £1,465; placement year £1,955. International fee was not stated in the supplied extract.",
-            "course_data_2026": "Foundation modules include Mathematics, Programming, Information Systems Development, Creative Computing, Applied Computing, and Algorithms. Year 1 includes Intro to Programming, Professional Practice, Data Modelling, Foundations of Computer Science, Web Development, and Computer Systems Architecture. Year 2 includes Group Project, Databases, Operating Systems, Algorithm Design, and Automata. Year 3 includes Computer Graphics, Contemporary Concepts, and a 40-credit Project, with AI, cryptography, network defence, and embedded-systems options."
+            "course_data_2026": "Foundation modules include Mathematics, Programming, Information Systems Development, Creative Computing, Applied Computing, and Algorithms. Year 1 includes Intro to Programming, Professional Practice, Data Modelling, Foundations of Computer Science, Web Development, and Computer Systems Architecture. Year 2 includes Group Project, Databases, Operating Systems, Algorithm Design, and Automata. Year 3 includes Computer Graphics, Contemporary Concepts, and a 40-credit Project, with AI, cryptography, network defence, and embedded-systems options.",
+            "career_outcomes": "Discover Uni outcomes for LJMU Computer Science report median earnings of £29,500 after 15 months, £23,500 after 3 years, and £28,500 after 5 years, with careers spanning software engineering, systems management, and related computing roles.",
+            "student_support": "LJMU provides active blended learning, a personal tutor from enrolment, around 15 contact hours per week plus guided independent study, dedicated careers support through the CareerSmart programme, and placement supervision throughout year-in-industry routes."
         },
         "metadata_reference": {
             "source_url": "https://www.ljmu.ac.uk/study/courses/undergraduates/2026/45579-computer-science-bsc-hons",
@@ -352,7 +354,8 @@
             "rankings_2026": "2026 rankings: CUG Computer Science main comparison 68; CUG Overall UK 50; QS World Ranking 643.",
             "entry_requirements": "A-level BBB including grade B in IT, Computer Science, Mathematics, Digital Technology, Software Systems Development, or a science subject. BTEC/OCR Extended Diploma DDD in IT or Computing. Access to HE Pass in Computing, IT, or Science with minimum 122 UCAS Tariff points. IB minimum 30 overall or 120 UCAS points including HL5 in a relevant subject. GCSE English and Mathematics C/4. IELTS 6.0 overall with no component below 5.5.",
             "fees_2026": "UK full-time tuition £9,790 per year; UK foundation fee £9,790. International full-time and foundation fees £21,500 per year.",
-            "course_data_2026": "The course covers programming, mathematics for computing, computer architecture, web development, databases, algorithms, networks, operating systems, AI, scalable architecture, cloud computing, and a final-year project. Core examples include Computing Fundamentals, Introduction to Programming, Team Project, Web Development and Databases, Computer Graphics, Advanced Programming Design, and Networks and Operating Systems. A four-year placement route is available."
+            "course_data_2026": "The course covers programming, mathematics for computing, computer architecture, web development, databases, algorithms, networks, operating systems, AI, scalable architecture, cloud computing, and a final-year project. Core examples include Computing Fundamentals, Introduction to Programming, Team Project, Web Development and Databases, Computer Graphics, Advanced Programming Design, and Networks and Operating Systems. A four-year placement route is available.",
+            "student_support": "Manchester Metropolitan states that applicants can discuss eligibility directly through the Clearing helpline and provides standard IELTS support guidance (6.0 overall, 5.5 each component) as part of admissions support for international applicants."
         },
         "metadata_reference": {
             "source_url": "https://www.mmu.ac.uk/study/undergraduate/course/bsc-computer-science#entry-requirements",
@@ -369,93 +372,38 @@
     },
     {
         "university_name": "Queen Mary University of London",
-        "course_code": "CS010",
-        "ukprn": "10007777",
+        "course_code": "G400",
         "metrics": {
             "annual_tuition_fee_uk": 9790,
-            "graduate_in_work_15_months_pct": 82.0,
-            "leo_median_salary_3_years": 34000,
             "annual_tuition_fee_uk_2026": "9790",
-            "annual_tuition_fee_intl_2026": "32950"
+            "annual_tuition_fee_intl_2026": "32950",
+            "leo_median_salary_3_years": 40500,
+            "graduate_in_work_15_months_pct": 82.0
         },
         "knowledge_layers": {
-            "curriculum_year_1": "Year 1 ModulesCOMP1111 Procedural Coding, COMP1222 Discrete Mathematics, Systems Architecture.",
-            "curriculum_year_2": "Year 2 ModulesCOMP2333 Data Structures, Software Engineering Paradigms, Database Systems.",
-            "curriculum_year_3": "Year 3 ModulesCOMP3444 Artificial Intelligence Core, Distributed Clusters, Final Year Project.",
-            "industrial_placements": "Industrial PlacementsOptional 12-month sandwich placement program verified across partner firms in tech sectors.",
-            "infrastructure_and_facilities": "Lab InfrastructureAccess to high-capacity Linux development terminals and dedicated robotics environments.",
+            "entry_requirements": "A-level AAA including one of Mathematics, Computer Science, or Physics. IB minimum 36 overall with 6,6,6 at Higher Level including one of those subjects. GCSE minimum five passes including English grade C/4 and Mathematics grade B/5. Standard contextual offer ABB; enhanced contextual offer BBB, including Maths, Physics, or Computer Science.",
             "entry_requirements_2026": "A-level AAA including one of Mathematics, Computer Science, or Physics. IB minimum 36 overall with 6,6,6 at Higher Level including one of those subjects. GCSE minimum five passes including English grade C/4 and Mathematics grade B/5. Standard contextual offer ABB; enhanced contextual offer BBB, including Maths, Physics, or Computer Science.",
             "rankings_2026": "2026 rankings: CUG Computer Science main comparison 27; CUG Overall UK 41; QS World Ranking 110.",
-            "entry_requirements": "A-level AAA including one of Mathematics, Computer Science, or Physics. IB minimum 36 overall with 6,6,6 at Higher Level including one of those subjects. GCSE minimum five passes including English grade C/4 and Mathematics grade B/5. Standard contextual offer ABB; enhanced contextual offer BBB, including Maths, Physics, or Computer Science.",
             "fees_2026": "2026 Computer Science BSc fees: Home £9,790; Overseas £32,950. The page lists indicative Clearing requirements and a September 2026 start.",
-            "course_data_2026": "The three-year BSc includes Year 1 procedural programming, systems and networks, discrete structures, web technology, information systems, and automata. Year 2 covers software engineering, probability, databases, algorithms, operating systems, graphical user interfaces, and internet protocols, with an optional summer internship. Year 3 includes a 60-credit project and specialist options; industrial experience and year-abroad routes are available."
+            "course_data_2026": "The three-year BSc includes Year 1 procedural programming, systems and networks, discrete structures, web technology, information systems, and automata. Year 2 covers software engineering, probability, databases, algorithms, operating systems, graphical user interfaces, and internet protocols, with an optional summer internship. Year 3 includes a 60-credit project and specialist options; industrial experience and year-abroad routes are available.",
+            "career_outcomes": "Discover Uni outcomes for Queen Mary Computer Science report median earnings of £33,500 after 15 months, £40,500 after 3 years, and £52,000 after 5 years. Graduate perceptions include 72% reporting their work is meaningful.",
+            "student_support": "Teaching and support include 15–20 contact hours weekly, regular personal advisor meetings, coursework and exam assessment, and specialist support in the refurbished Informatics Teaching Lab with module demonstrators available for first- and second-year students.",
+            "curriculum_year_1": "Year 1 core modules include ECS401U Procedural Programming, ECS404U Computer Systems and Networks, ECS407U Logic and Discrete Structures, ECS427U Professional and Research Practice, ECS414U Object Oriented Programming, ECS417U Fundamentals of Web Technology, ECS419U Information Systems Analysis, and ECS421U Automata and Formal Languages.",
+            "curriculum_year_2": "Year 2 core modules include ECS505U Software Engineering, ECS509U Probability and Matrices, ECS519U Database Systems, ECS529U Algorithms and Data Structures, ECS506U Software Engineering Project, ECS518U Operating Systems, ECS522U Graphical User Interfaces, and ECS524U Internet Protocols and Applications.",
+            "curriculum_year_3": "Year 3 includes ECS635U Project (30 credits) across Semesters 5 and 6 plus specialist options such as Data Mining, Computer Graphics, Security Engineering, Distributed Systems, and Neural Networks and Deep Learning.",
+            "industrial_placements": "An optional credit-bearing summer internship (ECS620U, 15 credits) is offered between second and final year, and related industrial experience pathways are available.",
+            "infrastructure_and_facilities": "Students are based at the Mile End campus with a newly refurbished Informatics Teaching Lab, seven-day opening (typically 8am to midnight), 24-hour remote access to School computing facilities, and module demonstrators supporting software and programming labs."
         },
         "metadata_reference": {
             "source_url": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science",
+            "metric_source_url": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science/",
             "verification_layer": "2026 institutional course page and supplied ranking verification URL",
             "layer_sources": {
+                "entry_requirements": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science",
                 "entry_requirements_2026": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science",
                 "rankings_2026": "https://www.qmul.ac.uk/media/news/2025/queen-mary-news/pr/queen-mary-recognised-as-top-global-university.html",
-                "entry_requirements": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science",
                 "fees_2026": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science/",
                 "course_data_2026": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science"
-            },
-            "metric_source_url": "https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science/"
-        }
-    },
-    {
-        "university_name": "University of Bristol",
-        "course_code": "G400",
-        "metrics": {
-            "annual_tuition_fee_uk": 9790,
-            "annual_tuition_fee_uk_2026": "9790",
-            "annual_tuition_fee_intl_2026": "33400"
-        },
-        "knowledge_layers": {
-            "entry_requirements": "Entry requirements should be verified from the official Bristol course page for the intake year. The audited source bundle provided explicit fee and ranking evidence, while entry criteria were flagged for institutional verification.",
-            "entry_requirements_2026": "Entry requirements should be verified from the official Bristol course page for the intake year. The audited source bundle provided explicit fee and ranking evidence, while entry criteria were flagged for institutional verification.",
-            "rankings_2026": "2026 rankings: CUG Computer Science main comparison ; CUG Overall UK 17; QS World Ranking 57.",
-            "fees_2026": "BSc Computer Science listed fees: Home £9,790 for the first year; International £33,400 for the first year. Fees are reviewed annually and may rise in line with policy and inflation.",
-            "course_data_2026": "The audited source confirms the Bristol Computer Science BSc page and institutional rankings evidence. The programme should be treated as a standard undergraduate Computer Science route with detailed modules verified from the official course structure page for the relevant entry year."
-        },
-        "metadata_reference": {
-            "source_url": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
-            "metric_source_url": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
-            "verification_layer": "2026 institutional course page and supplied ranking verification URL",
-            "layer_sources": {
-                "entry_requirements": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
-                "entry_requirements_2026": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
-                "rankings_2026": "https://www.bristol.ac.uk/university/rankings-reputation/",
-                "fees_2026": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/",
-                "course_data_2026": "https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/"
-            }
-        }
-    },
-    {
-        "university_name": "The University of Edinburgh",
-        "course_code": "G400",
-        "metrics": {
-            "annual_tuition_fee_uk": 9535,
-            "annual_tuition_fee_uk_2026": "9535",
-            "annual_tuition_fee_intl_2026": "36800"
-        },
-        "knowledge_layers": {
-            "entry_requirements": "The audited source confirms the Artificial Intelligence and Computer Science programme profile and links to official fees and ranking pages. Entry details should be validated on the latest admissions cycle page before final decision-making.",
-            "entry_requirements_2026": "The audited source confirms the Artificial Intelligence and Computer Science programme profile and links to official fees and ranking pages. Entry details should be validated on the latest admissions cycle page before final decision-making.",
-            "rankings_2026": "2026 rankings: CUG Computer Science main comparison ; CUG Overall UK 34; QS World Ranking 34.",
-            "fees_2026": "Artificial Intelligence and Computer Science (BSc Hons) tuition listed as £9,535 for Rest of UK and £36,800 for International students for 2025/26; Scotland fee shown as £1,820 in the audited source.",
-            "course_data_2026": "The programme combines artificial intelligence with core computer science topics and is positioned as a full-time honours pathway. The audited source confirms this programme identity and links it to official fees and QS subject ranking evidence."
-        },
-        "metadata_reference": {
-            "source_url": "https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science",
-            "metric_source_url": "https://registryservices.ed.ac.uk/tuition-fees/find/undergraduate/2025-2026/full-time-new-students",
-            "verification_layer": "2026 institutional course page and supplied ranking verification URL",
-            "layer_sources": {
-                "entry_requirements": "https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science",
-                "entry_requirements_2026": "https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science",
-                "rankings_2026": "https://www.ed.ac.uk/news/2024/qs-world-university-rankings-2026",
-                "fees_2026": "https://registryservices.ed.ac.uk/tuition-fees/find/undergraduate/2025-2026/full-time-new-students",
-                "course_data_2026": "https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science"
             }
         }
     }

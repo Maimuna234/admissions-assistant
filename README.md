@@ -95,9 +95,9 @@ Hand-curated and scraper-enriched JSON with 8 knowledge layers per university:
 
 | University | DB Name |
 |---|---|
-| University of Liverpool | The University of Liverpool |
+| University of Liverpool | University of Liverpool |
 | University of Leeds | University of Leeds |
-| University of Manchester | The University of Manchester |
+| University of Manchester | University of Manchester |
 | University of Sheffield | University of Sheffield |
 | Lancaster University | Lancaster University |
 | University of Birmingham | University of Birmingham |

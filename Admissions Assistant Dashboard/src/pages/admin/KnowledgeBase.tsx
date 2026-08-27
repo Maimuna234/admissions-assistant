@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-type Priority = "entry" | "curriculum" | "outcomes" | "fees" | "teaching" | "rankings";
+type Priority = "entry" | "curriculum" | "outcomes" | "fees" | "teaching" | "facilities" | "rankings";
 type FileType = "csv" | "scraper" | "ingestion" | "generated";
 type DataStatus = "current" | "stale" | "updating" | "error";
 
@@ -22,6 +22,7 @@ const PRIORITY_LABELS: Record<Priority, string> = {
   outcomes: "Graduate Outcomes & Salary",
   fees: "Fees & Cost",
   teaching: "Teaching Quality & NSS",
+  facilities: "Facilities",
   rankings: "University Rankings",
 };
 
@@ -80,6 +81,17 @@ const DATA_SOURCES: DataSource[] = [
     scraperScript: "scrape_nss_tef.py",
     ingestionScript: "ingest_nss_tef.py",
     generatedFile: "nss_tef_processed.json",
+  },
+  {
+    priority: "facilities",
+    label: "Facilities",
+    recordCount: 121,
+    lastUpdated: "2026-08-18T16:45:00Z",
+    status: "current",
+    csvFile: "facilities_2026.csv",
+    scraperScript: "scrape_facilities.py",
+    ingestionScript: "ingest_facilities.py",
+    generatedFile: "facilities_processed.json",
   },
   {
     priority: "rankings",

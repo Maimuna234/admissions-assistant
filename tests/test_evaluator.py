@@ -7,10 +7,25 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from evaluator import RAGEvaluator
+from evaluator import NO_INFO_CANONICAL, RAGEvaluator, align_ground_truth_to_rag
 
 
 class EvaluatorTests(unittest.TestCase):
+    def test_align_ground_truth_normalizes_wrapped_no_info_responses(self):
+        value = align_ground_truth_to_rag(
+            "Based on the provided Context Chunks, here is the output:\n\n• Information Not Available in Source Documentation"
+        )
+        self.assertEqual(value, NO_INFO_CANONICAL)
+
+    def test_build_evaluation_query_includes_target_institution_context(self):
+        evaluator = RAGEvaluator()
+        query = evaluator._build_evaluation_query({
+            "question": "What are the core modules taught in Year 1?",
+            "target_competitor": "University of Leeds",
+        })
+        self.assertIn("University of Leeds", query)
+        self.assertIn("Computer Science BSc", query)
+
     def test_run_evaluations_writes_numeric_metric_scores(self):
         evaluator = RAGEvaluator()
 

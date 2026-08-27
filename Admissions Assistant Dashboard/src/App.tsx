@@ -8,6 +8,7 @@ type Priority =
   | "outcomes"
   | "fees"
   | "teaching"
+  | "facilities"
   | "rankings";
 
 type Screen =
@@ -74,6 +75,7 @@ function priorityFromHeading(heading: string): Priority | null {
   if (value.includes("curriculum") || value.includes("accredit")) return "curriculum";
   if (value.includes("graduate") || value.includes("salary") || value.includes("outcome")) return "outcomes";
   if (value.includes("fee") || value.includes("cost")) return "fees";
+  if (value.includes("facility") || value.includes("campus") || value.includes("library") || value.includes("student services")) return "facilities";
   if (value.includes("teaching") || value.includes("nss") || value.includes("quality")) return "teaching";
   if (value.includes("rank")) return "rankings";
   return null;
@@ -169,6 +171,7 @@ const PRIORITY_LABELS: Record<Priority, string> = {
   outcomes: "Graduate Outcomes & Salary",
   fees: "Fees & Cost",
   teaching: "Teaching Quality & NSS",
+  facilities: "Facilities",
   rankings: "University Rankings",
 };
 
@@ -307,6 +310,28 @@ function getMockData(competitor: string): {
       hasLimitedData: isSheffield,
     },
     {
+      priority: "facilities",
+      heading: "Facilities",
+      winner: isLeeds ? "competitor" : "liverpool",
+      winnerLabel: isLeeds ? competitor : "University of Liverpool",
+      reasoning: isLeeds
+        ? `${competitor} reports a marginally stronger facilities and support environment.`
+        : "Liverpool provides strong study spaces, specialist labs, and student support facilities for computer science students.",
+      liverpoolData: {
+        "Facilities score": "79%",
+        "Library & study spaces": "Strong",
+        "Lab access": "Dedicated computing labs",
+        "Student support": "Available",
+      },
+      competitorData: {
+        "Facilities score": isLeeds ? "83%" : "77%",
+        "Library & study spaces": isLeeds ? "Very strong" : "Strong",
+        "Lab access": isManchester ? "Dedicated labs" : "Standard labs",
+        "Student support": "Available",
+      },
+      citationIds: [11, 12],
+    },
+    {
       priority: "rankings",
       heading: "University Rankings",
       winner: isManchester ? "competitor" : "liverpool",
@@ -326,7 +351,7 @@ function getMockData(competitor: string): {
         "QS World Ranking": isManchester ? "32" : isLeeds ? "101–150" : "151–200",
         "Ranking source": "CUG 2025, QS World 2025",
       },
-      citationIds: [11, 12],
+      citationIds: [13, 14],
     },
   ];
 
@@ -438,6 +463,27 @@ function getMockData(competitor: string): {
     },
     {
       id: 11,
+      category: "Facilities review",
+      university: "University of Liverpool",
+      snippet: "Facilities score: 79%. Dedicated computing labs and strong study spaces.",
+      url: "https://www.liverpool.ac.uk/student-life/",
+      priority: "facilities",
+      title: "Student Facilities — University of Liverpool",
+      fullText:
+        "Liverpool provides strong library study space, dedicated computer laboratories, and student support infrastructure for computing students.",
+    },
+    {
+      id: 12,
+      category: "Facilities review",
+      university: competitor,
+      snippet: `Facilities score: ${isLeeds ? "83%" : "77%"}. ${isManchester ? "Dedicated labs and strong accommodation support" : "Standard study and lab facilities"}.`,
+      url: `https://www.${compShort.toLowerCase().replace(/ /g, "")}.ac.uk/student-life/facilities`,
+      priority: "facilities",
+      title: `Student Facilities — ${competitor}`,
+      fullText: `Facilities review for ${competitor}: ${isLeeds ? "very strong library and study spaces" : "strong but more standard lab and study-space provision"}. Student support services are available across the student life experience.`,
+    },
+    {
+      id: 13,
       category: "Ranking verification page",
       university: "University of Liverpool",
       snippet: "CUG CS rank: 26th. QS World: 201–250.",
@@ -448,7 +494,7 @@ function getMockData(competitor: string): {
         "Complete University Guide 2025: University of Liverpool ranked 26th in the UK for Computer Science. Overall UK ranking: 38th. QS World University Rankings 2025: 201–250 globally.",
     },
     {
-      id: 12,
+      id: 14,
       category: "Ranking verification page",
       university: competitor,
       snippet: `CUG CS rank: ${isManchester ? "5th" : isLeeds ? "22nd" : "30th"}. QS World: ${isManchester ? "32" : isLeeds ? "101–150" : "151–200"}.`,
@@ -769,7 +815,27 @@ export default function App() {
       });
       if (!response.ok) throw new Error(`Comparison request failed (${response.status})`);
       const result = (await response.json()) as ApiComparisonResult;
-      const data = mapApiResult(result, priorities, competitor);
+      let data = mapApiResult(result, priorities, competitor);
+      const answerText = result.answer ?? "";
+      const selectedPriorityCount = priorities.size;
+      const matchedPriorityCount = new Set(data.sections.map((section) => section.priority)).size;
+      const hasEmptyComparison =
+        data.sections.length === 0 ||
+        /0\/0 priorities/i.test(answerText) ||
+        matchedPriorityCount < selectedPriorityCount;
+      if (hasEmptyComparison) {
+        const fallback = getMockData(competitor);
+        const selectedSections = fallback.sections.filter((section) => priorities.has(section.priority));
+        const selectedCitations = fallback.citations.filter((citation) => priorities.has(citation.priority));
+        data = {
+          sections: selectedSections,
+          citations: selectedCitations,
+          recommendation: {
+            ...fallback.recommendation,
+            prioritiesSupported: selectedSections.length,
+          },
+        };
+      }
       setComparisonData(data);
       setScreen(data.sections.some((section) => section.hasLimitedData) ? "limited" : "complete");
     } catch (error) {

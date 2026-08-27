@@ -11,7 +11,7 @@ class VectorIndexingPipeline:
         
         # Initialize an open-source sentence transformer model for local/Colab deployment
         # This maps text into a dense 384-dimensional vector space
-        print("🔄 Loading embedding model engine...")
+        print("Loading embedding model engine...")
         self.embedding_engine = HuggingFaceEmbeddings(
             model_name="all-MiniLM-L6-v2",
             model_kwargs={'device': 'cpu'} # Change to 'cuda' if running on GPU/Colab
@@ -23,7 +23,7 @@ class VectorIndexingPipeline:
         with clean semantic text boundaries and exact metadata matrices.
         """
         if not os.path.exists(self.kb_file):
-            raise FileNotFoundError(f"❌ Missing source file: {self.kb_file}. Run Phase 1 first!")
+            raise FileNotFoundError(f"Missing source file: {self.kb_file}. Run Phase 1 first!")
 
         with open(self.kb_file, "r", encoding="utf-8") as f:
             kb_data = json.load(f)
@@ -91,14 +91,14 @@ class VectorIndexingPipeline:
                 
                 documents_pool.append(Document(page_content=chunk_text, metadata=meta_layer))
 
-        print(f"✅ Generated {len(documents_pool)} isolated context chunks from knowledge base.")
+        print(f"Generated {len(documents_pool)} isolated context chunks from knowledge base.")
         return documents_pool
 
     def build_and_persist_vector_store(self, documents):
         """
         Initializes a persistent local ChromaDB instance and indexes the document embeddings.
         """
-        print(f"📦 Committing records to persistent database at: {self.db_directory}...")
+        print(f"Committing records to persistent database at: {self.db_directory}...")
         
         # Instantiate Chroma and load the records
         vector_store = Chroma.from_documents(
@@ -106,7 +106,7 @@ class VectorIndexingPipeline:
             embedding=self.embedding_engine,
             persist_directory=self.db_directory
         )
-        print("✅ Vector indexing and structural storage completed successfully.")
+        print("Vector indexing and structural storage completed successfully.")
         return vector_store
 
     def run(self):

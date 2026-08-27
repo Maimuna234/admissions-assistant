@@ -10,6 +10,10 @@ SQLITE_PATH = ROOT / "admissions_structured.db"
 KB_PATH = ROOT / "clearing_knowledge_base.json"
 
 
+def canonical_uni(name: str) -> str:
+    return " ".join(str(name or "").lower().replace("the ", "").split())
+
+
 ENTRY_SOURCES = {
     "University of Manchester": ("https://www.manchester.ac.uk/study/undergraduate/courses/2026/00560/bsc-computer-science/", "A-level A*A*A including A* in Mathematics and at least one science subject. Contextual offer AAA. IB 38 overall with 7,7,6 at Higher Level including 7 in Mathematics: Analysis and Approaches. GCSE Mathematics and English Language normally B/6. IELTS 7.0 overall with no component below 6.5; TOEFL iBT 100 overall with no subscore below 22."),
     "University of Birmingham": ("https://www.birmingham.ac.uk/study/undergraduate/subjects/computer-science-courses/computer-science-bsc", "A-level A*AA including A-level Mathematics grade A. IB 7,6,6 at Higher Level including Mathematics, minimum 32 points overall. BTEC only accepted with other qualifications including A-level Mathematics. Contextual offer AAA including A in Mathematics or Further Mathematics; Pathways to Birmingham ABB including A in Maths or Further Maths. IELTS 6.0 overall with no band below 5.5."),
@@ -22,15 +26,13 @@ ENTRY_SOURCES = {
     "Lancaster University": ("https://www.lancaster.ac.uk/study/undergraduate/courses/computer-science-bsc-hons-g400/2026/#course-entry", "A-level AAB. Applicants with Computing, Computer Science, or Mathematics may be considered for a lower offer. Access to HE: 36 Level 3 credits at Distinction plus 9 at Merit. BTEC Extended Diploma DDD. IB 35 overall with 16 points from the best three Higher Level subjects. GCSE Mathematics 6/B and English Language 4/C. IELTS 6.0 overall with at least 5.5 in each component."),
     "Manchester Metropolitan University": ("https://www.mmu.ac.uk/study/undergraduate/course/bsc-computer-science#entry-requirements", "A-level BBB including grade B in IT, Computer Science, Mathematics, Digital Technology, Software Systems Development, or a science subject. BTEC/OCR Extended Diploma DDD in IT or Computing. Access to HE Pass in Computing, IT, or Science with minimum 122 UCAS Tariff points. IB minimum 30 overall or 120 UCAS points including HL5 in a relevant subject. GCSE English and Mathematics C/4. IELTS 6.0 overall with no component below 5.5."),
     "Liverpool John Moores University": ("https://www.ljmu.ac.uk/study/courses/undergraduates/2026/45579-computer-science-bsc-hons", "The supplied 2026 source lists a minimum of 64 UCAS points and directs applicants to the Clearing application form or hotline for the latest entry requirements."),
-    "University of Bristol": ("https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/", "Entry requirements should be verified from the official Bristol course page for the intake year. The audited source bundle provided explicit fee and ranking evidence, while entry criteria were flagged for institutional verification."),
-    "The University of Edinburgh": ("https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science", "The audited source confirms the Artificial Intelligence and Computer Science programme profile and links to official fees and ranking pages. Entry details should be validated on the latest admissions cycle page before final decision-making."),
 }
 
 SOURCE_NAME_ALIASES = {"Queen Mary University of London": "Queen Mary University London"}
-DB_NAME_ALIASES = {"University of Liverpool": "The University of Liverpool"}
+DB_NAME_ALIASES = {"University of Liverpool": "University of Liverpool"}
 
 FEE_SOURCES = {
-    "University of Manchester": ("https://www.manchester.ac.uk/study/undergraduate/courses/2027/00560/bsc-computer-science/", "9790", "Not stated", "2026 home fee £9,790 per year; 2027 fees not yet set and expected to increase slightly. Additional compulsory costs above 1% of the annual home fee should be disclosed.",),
+    "University of Manchester": ("https://www.manchester.ac.uk/study/undergraduate/courses/2026/00560/bsc-computer-science/", "9790", "37800", "2026/27 tuition: Home £9,790 per year (subject to Parliamentary approval); International £37,800 per year. The source notes that home fee caps may rise in subsequent years and international fees may increase by up to 7% per year.",),
     "Lancaster University": ("https://www.lancaster.ac.uk/study/undergraduate/courses/computer-science-bsc-hons-g400/2027/#fees", "10050", "TBC", "2027/28 annual tuition: Home £10,050; International fee TBC. The supplied source notes fees are set for a 12-month session and 2026-entry scholarships may be used as a guide.",),
     "University of Leeds": ("https://courses.leeds.ac.uk/202627/3260/computer-science-bsc#fees", "9790", "32750", "2026/27 tuition: UK £9,790 per year; International £32,750 per year. The source confirms a 2027/28 UK fee of £10,050 and reduced fees may apply to study-abroad or work-placement years.",),
     "University of Birmingham": ("https://www.birmingham.ac.uk/study/undergraduate/subjects/computer-science-courses/computer-science-bsc", "9790", "Not stated", "September 2026 home tuition fee £9,790 per year. A placement year is charged at 15% of the agreed tuition fee; international fee depends on country and is not stated in the supplied extract.",),
@@ -41,8 +43,6 @@ FEE_SOURCES = {
     "Manchester Metropolitan University": ("https://www.mmu.ac.uk/study/undergraduate/course/bsc-computer-science#fees", "9790", "21500", "UK full-time tuition £9,790 per year; UK foundation fee £9,790. International full-time and foundation fees £21,500 per year.",),
     "Queen Mary University London": ("https://www.qmul.ac.uk/undergraduate/coursefinder/courses/2026/computer-science/", "9790", "32950", "2026 Computer Science BSc fees: Home £9,790; Overseas £32,950. The page lists indicative Clearing requirements and a September 2026 start.",),
     "University of Liverpool": ("https://www.liverpool.ac.uk/courses/redirect/computer-science-bsc-hons/overview#fees-and-funding", "9790", "32000", "2026/27 tuition: UK £9,790 per year; International £32,000 per year. Year in industry £1,955; year abroad £1,465 for the China option, and international year abroad £16,000.",),
-    "University of Bristol": ("https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/", "9790", "33400", "BSc Computer Science listed fees: Home £9,790 for the first year; International £33,400 for the first year. Fees are reviewed annually and may rise in line with policy and inflation.",),
-    "The University of Edinburgh": ("https://registryservices.ed.ac.uk/tuition-fees/find/undergraduate/2025-2026/full-time-new-students", "9535", "36800", "Artificial Intelligence and Computer Science (BSc Hons) tuition listed as £9,535 for Rest of UK and £36,800 for International students for 2025/26; Scotland fee shown as £1,820 in the audited source.",),
 }
 
 COURSE_SOURCES = {
@@ -57,8 +57,6 @@ COURSE_SOURCES = {
     "Lancaster University": ("https://www.lancaster.ac.uk/study/undergraduate/courses/computer-science-bsc-hons-g400/2026/#structure", "Year 1 core study includes Digital Systems, Fundamentals of Computer Science, Software Development, and Designing Software Systems. Year 2 includes a Computer Science Group Project, HCI, Networks and Systems, and Secure Data and Systems. Year 3 includes a Third Year Project and options including machine learning, NLP, quantum computing, secure AI, and distributed systems."),
     "Manchester Metropolitan University": ("https://www.mmu.ac.uk/study/undergraduate/course/bsc-computer-science#course-information", "The course covers programming, mathematics for computing, computer architecture, web development, databases, algorithms, networks, operating systems, AI, scalable architecture, cloud computing, and a final-year project. Core examples include Computing Fundamentals, Introduction to Programming, Team Project, Web Development and Databases, Computer Graphics, Advanced Programming Design, and Networks and Operating Systems. A four-year placement route is available."),
     "Liverpool John Moores University": ("https://www.ljmu.ac.uk/study/courses/undergraduates/2026/45579-computer-science-bsc-hons", "Foundation modules include Mathematics, Programming, Information Systems Development, Creative Computing, Applied Computing, and Algorithms. Year 1 includes Intro to Programming, Professional Practice, Data Modelling, Foundations of Computer Science, Web Development, and Computer Systems Architecture. Year 2 includes Group Project, Databases, Operating Systems, Algorithm Design, and Automata. Year 3 includes Computer Graphics, Contemporary Concepts, and a 40-credit Project, with AI, cryptography, network defence, and embedded-systems options."),
-    "University of Bristol": ("https://www.bristol.ac.uk/study/undergraduate/2025/computer-science/bsc-computer-science/", "The audited source confirms the Bristol Computer Science BSc page and institutional rankings evidence. The programme should be treated as a standard undergraduate Computer Science route with detailed modules verified from the official course structure page for the relevant entry year."),
-    "The University of Edinburgh": ("https://study.ed.ac.uk/programmes/undergraduate/66-artificial-intelligence-and-computer-science", "The programme combines artificial intelligence with core computer science topics and is positioned as a full-time honours pathway. The audited source confirms this programme identity and links it to official fees and QS subject ranking evidence."),
 }
 
 METRIC_OVERRIDES = {
@@ -69,9 +67,80 @@ METRIC_OVERRIDES = {
 }
 
 NSS_OVERRIDES = {
+    "Queen Mary University of London": {
+        "nss_teaching_satisfaction": "86.4",
+        "nss_mental_wellbeing": "77.9",
+        "nss_facilities_resources": "84.1",
+    },
     "Liverpool John Moores University": {
         "nss_teaching_satisfaction": "86.1",
+        "nss_mental_wellbeing": "77.8",
+        "nss_facilities_resources": "84.2",
     }
+}
+
+SQL_FIELD_OVERRIDES = {
+    "University of Manchester": {
+        "tuition_fee_uk": "9790",
+        "tuition_fee_intl": "37800",
+    },
+    "Queen Mary University of London": {
+        "entry_tariff": "144",
+        "alevel_requirement": "A-level AAA including one of Mathematics, Computer Science, or Physics.",
+        "bcs_accredited": "1",
+        "has_placement_year": "1",
+        "has_year_abroad": "1",
+        "final_year_project_credits": "30",
+        "median_salary_go": "33500",
+        "median_salary_leo3": "40500",
+        "median_salary_leo5": "52000",
+        "tef_overall_rating": "Silver",
+        "tef_student_experience": "Silver",
+    },
+    "Liverpool John Moores University": {
+        "entry_tariff": "64",
+        "alevel_requirement": "Minimum 64 UCAS tariff points for 2026 entry; Clearing may apply lower contextual flexibility.",
+        "bcs_accredited": "1",
+        "has_placement_year": "1",
+        "has_year_abroad": "1",
+        "final_year_project_credits": "40",
+        "median_salary_go": "29500",
+        "median_salary_leo3": "23500",
+        "median_salary_leo5": "28500",
+        "tef_overall_rating": "Silver",
+        "tef_student_experience": "Silver",
+    },
+    "Manchester Metropolitan University": {
+        "entry_tariff": "122",
+        "alevel_requirement": "A-level BBB including IT, Computer Science, Mathematics, Digital Technology, Software Systems Development, or a science subject.",
+    },
+}
+
+KB_LAYER_OVERRIDES = {
+    "Queen Mary University of London": {
+        "curriculum_year_1": "Year 1 core modules include ECS401U Procedural Programming, ECS404U Computer Systems and Networks, ECS407U Logic and Discrete Structures, ECS427U Professional and Research Practice, ECS414U Object Oriented Programming, ECS417U Fundamentals of Web Technology, ECS419U Information Systems Analysis, and ECS421U Automata and Formal Languages.",
+        "curriculum_year_2": "Year 2 core modules include ECS505U Software Engineering, ECS509U Probability and Matrices, ECS519U Database Systems, ECS529U Algorithms and Data Structures, ECS506U Software Engineering Project, ECS518U Operating Systems, ECS522U Graphical User Interfaces, and ECS524U Internet Protocols and Applications.",
+        "curriculum_year_3": "Year 3 includes ECS635U Project (30 credits) across Semesters 5 and 6 plus specialist options such as Data Mining, Computer Graphics, Security Engineering, Distributed Systems, and Neural Networks and Deep Learning.",
+        "industrial_placements": "An optional credit-bearing summer internship (ECS620U, 15 credits) is offered between second and final year, and related industrial experience pathways are available.",
+        "career_outcomes": "Discover Uni outcomes for Queen Mary Computer Science report median earnings of £33,500 after 15 months, £40,500 after 3 years, and £52,000 after 5 years. Graduate perceptions include 72% reporting their work is meaningful.",
+        "student_support": "Teaching and support include 15–20 contact hours weekly, regular personal advisor meetings, coursework and exam assessment, and specialist support in the refurbished Informatics Teaching Lab with module demonstrators available for first- and second-year students.",
+        "infrastructure_and_facilities": "Students are based at the Mile End campus with a newly refurbished Informatics Teaching Lab, seven-day opening (typically 8am to midnight), 24-hour remote access to School computing facilities, and module demonstrators supporting software and programming labs.",
+    },
+    "Liverpool John Moores University": {
+        "career_outcomes": "Discover Uni outcomes for LJMU Computer Science report median earnings of £29,500 after 15 months, £23,500 after 3 years, and £28,500 after 5 years, with careers spanning software engineering, systems management, and related computing roles.",
+        "student_support": "LJMU provides active blended learning, a personal tutor from enrolment, around 15 contact hours per week plus guided independent study, dedicated careers support through the CareerSmart programme, and placement supervision throughout year-in-industry routes.",
+        "infrastructure_and_facilities": "LJMU Computer Science students benefit from specialist computing labs, over 400 workstations, access to software-rich teaching spaces, and a blended delivery model that combines in-person lab teaching with guided online support.",
+    },
+    "Manchester Metropolitan University": {
+        "student_support": "Manchester Metropolitan states that applicants can discuss eligibility directly through the Clearing helpline and provides standard IELTS support guidance (6.0 overall, 5.5 each component) as part of admissions support for international applicants.",
+    },
+}
+
+KB_METRIC_OVERRIDES = {
+    "Queen Mary University of London": {
+        "leo_median_salary_3_years": 40500,
+        "graduate_in_work_15_months_pct": 82.0,
+    },
 }
 
 
@@ -111,37 +180,58 @@ def update_database(rows):
                 f"UPDATE course_facts SET {set_clause} WHERE university=? AND lower(course_title) LIKE '%computer science%'",
                 params,
             )
+        sql_updates = SQL_FIELD_OVERRIDES.get(db_university)
+        if sql_updates:
+            set_clause = ", ".join([f"{field}=?" for field in sql_updates])
+            params = list(sql_updates.values()) + [db_university]
+            cursor.execute(
+                f"UPDATE course_facts SET {set_clause} WHERE university=? AND lower(course_title) LIKE '%computer science%'",
+                params,
+            )
     cursor.execute("DELETE FROM course_facts WHERE university='University of Liverpool' AND course_title='Computer Science' AND ucas_code='G400'")
     connection.commit()
     connection.close()
 
 
 def update_knowledge_base(rows):
-    entries = json.loads(KB_PATH.read_text(encoding="utf-8"))
-    by_name = {entry["university_name"]: entry for entry in entries}
+    raw_entries = json.loads(KB_PATH.read_text(encoding="utf-8"))
+    deduped = {}
+    for entry in raw_entries:
+        deduped[canonical_uni(entry.get("university_name"))] = entry
+
     for row in rows:
         university = row["University"]
         source_key = SOURCE_NAME_ALIASES.get(university, university)
         entry_url, entry_text = ENTRY_SOURCES[source_key]
         fee_url, home_fee, international_fee, fee_text = FEE_SOURCES[source_key]
         course_url, course_text = COURSE_SOURCES[source_key]
-        entry = by_name.setdefault(source_key, {"university_name": source_key, "course_code": "G400", "metrics": {}, "knowledge_layers": {}})
+        canonical = canonical_uni(university)
+        entry = deduped.setdefault(
+            canonical,
+            {"university_name": university, "course_code": "G400", "metrics": {}, "knowledge_layers": {}},
+        )
         entry["university_name"] = university
         entry.setdefault("knowledge_layers", {})["entry_requirements"] = entry_text
         entry["knowledge_layers"]["entry_requirements_2026"] = entry_text
         entry["knowledge_layers"]["rankings_2026"] = f"2026 rankings: CUG Computer Science main comparison {row['CUG 2026 - Computer Science (Main Comparison)']}; CUG Overall UK {row['CUG 2026 - Overall (UK)']}; QS World Ranking {row['QS World Ranking 2026']}."
         entry["knowledge_layers"]["fees_2026"] = fee_text
         entry["knowledge_layers"]["course_data_2026"] = course_text
+        layer_updates = KB_LAYER_OVERRIDES.get(university)
+        if layer_updates:
+            entry["knowledge_layers"].update(layer_updates)
         if home_fee.isdigit():
             entry["metrics"]["annual_tuition_fee_uk"] = int(home_fee)
         entry["metrics"]["annual_tuition_fee_uk_2026"] = home_fee
         entry["metrics"]["annual_tuition_fee_intl_2026"] = international_fee
+        metric_updates = KB_METRIC_OVERRIDES.get(university)
+        if metric_updates:
+            entry["metrics"].update(metric_updates)
         references = entry.setdefault("metadata_reference", {})
         references["source_url"] = entry_url
         references["metric_source_url"] = fee_url
         references["verification_layer"] = "2026 institutional course page and supplied ranking verification URL"
         references["layer_sources"] = {**references.get("layer_sources", {}), "entry_requirements": entry_url, "entry_requirements_2026": entry_url, "rankings_2026": row["Ranking Source URL (Verification)"], "fees_2026": fee_url, "course_data_2026": course_url}
-    KB_PATH.write_text(json.dumps(list(by_name.values()), indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
+    KB_PATH.write_text(json.dumps(list(deduped.values()), indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

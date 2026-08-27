@@ -411,7 +411,7 @@ class QueryRouter:
             "ranking", "rank", "guardian", "league table", "qs rank", "tef", "nss",
             "satisfaction", "wellbeing", "accredited", "bcs", "entry tariff", "ucas points",
             "tariff", "a-level", "a level", "year abroad", "foundation year",
-            "international fee", "employment rate", "median salary",
+            "international fee", "employment rate", "median salary", "ucas code",
         ]
         if any(kw in query.lower() for kw in sql_keywords):
             return "SQL"
@@ -1045,6 +1045,125 @@ Admissions Advisor Response:"""
 
         return metrics
 
+    def _kb_field_map(self, docs) -> dict[str, str]:
+        fields: dict[str, str] = {}
+        for doc in docs:
+            metadata = getattr(doc, "metadata", {}) or {}
+            if metadata.get("data_layer") != "knowledge_base_fallback":
+                continue
+            content = str(getattr(doc, "page_content", "") or "")
+            for line in content.splitlines():
+                if ":" not in line:
+                    continue
+                key, value = line.split(":", 1)
+                key = key.strip().lower()
+                value = value.strip()
+                if key and value and key not in fields:
+                    fields[key] = value
+        return fields
+
+    def _clean_kb_text(self, text: str) -> str:
+        cleaned = re.sub(r"\s+", " ", str(text or "")).strip()
+        cleaned = re.sub(r"^(?:year\s*\d+\s*modules?)", "", cleaned, flags=re.IGNORECASE).strip(" :-")
+        cleaned = re.sub(r"^(?:industrial placements?|lab infrastructure|student support|career outcomes)", "", cleaned, flags=re.IGNORECASE).strip(" :-")
+        return cleaned.rstrip(". ")
+
+    def _synthesize_single_university_kb_answer(self, user_query: str, docs) -> str | None:
+        fields = self._kb_field_map(docs)
+        if not fields:
+            return None
+
+        lower_query = user_query.lower()
+
+        if any(term in lower_query for term in ["ucas", "course code"]):
+            explicit_ucas = fields.get("ucas code")
+            if explicit_ucas:
+                return f"The UCAS code listed in the source evidence is {explicit_ucas}. [1]"
+            return self._build_fallback_response("missing code evidence")
+
+        if "year 1" in lower_query and "difference" not in lower_query and "year 3" not in lower_query:
+            year_1 = self._clean_kb_text(fields.get("curriculum_year_1", ""))
+            if year_1:
+                return f"Year 1 core modules include {year_1}. [1]"
+
+        if "year 2" in lower_query and "difference" not in lower_query:
+            year_2 = self._clean_kb_text(fields.get("curriculum_year_2", ""))
+            if year_2:
+                return f"Year 2 core modules include {year_2}. [1]"
+
+        if "year 3" in lower_query and any(term in lower_query for term in ["optional module", "optional modules"]):
+            course_year_3 = fields.get("curriculum_year_3", "")
+            course_data = fields.get("course_data_2026", "")
+            option_match = re.search(r"specialist options including (.+?)(?:\.|$)", course_data, re.IGNORECASE)
+            if option_match:
+                return f"Year 3 optional modules mentioned in the source include {option_match.group(1).strip()}. [1]"
+            if course_year_3:
+                return "No optional Year 3 modules are explicitly listed in the source documentation. [1]"
+            return self._build_fallback_response("missing year 3 options evidence")
+
+        if "year 1" in lower_query and "year 3" in lower_query and any(term in lower_query for term in ["difference", "differences", "summarize"]):
+            year_1 = self._clean_kb_text(fields.get("curriculum_year_1", ""))
+            year_3 = self._clean_kb_text(fields.get("curriculum_year_3", ""))
+            if year_1 and year_3:
+                return f"Year 1 focuses on {year_1}. Year 3 focuses on {year_3}. [1]"
+
+        if any(term in lower_query for term in ["annual tuition fees for uk", "home fee", "uk students", "uk tuition"]):
+            fees_text = fields.get("fees_2026", "")
+            uk_match = re.search(r"(?:uk|home)\s*[£�]\s*([0-9,]+)", fees_text, re.IGNORECASE)
+            if uk_match:
+                return f"The listed annual tuition fee for UK students is £{uk_match.group(1)} per year. [1]"
+            return self._build_fallback_response("missing uk fee evidence")
+
+        if any(term in lower_query for term in ["annual tuition fees for international", "international students", "international tuition"]):
+            fees_text = fields.get("fees_2026", "")
+            intl_match = re.search(r"international\s*(?:fee)?\s*[£�]\s*([0-9,]+)", fees_text, re.IGNORECASE)
+            if intl_match:
+                return f"The listed annual tuition fee for international students is £{intl_match.group(1)} per year. [1]"
+            return "The source documentation does not explicitly confirm a separate international tuition fee for this course. [1]"
+
+        if any(term in lower_query for term in ["placement year", "industry placement", "placement"]):
+            placement_text = self._clean_kb_text(fields.get("industrial_placements", ""))
+            if placement_text:
+                if "guaranteed" in lower_query:
+                    return f"The source confirms {placement_text}. It does not explicitly state that a placement is guaranteed. [1]"
+                if any(term in lower_query for term in ["help students find", "help students", "support placement"]):
+                    return f"The source confirms {placement_text}. It does not explicitly describe a separate placement-matching guarantee or support process. [1]"
+                if "international students" in lower_query:
+                    return f"The source confirms {placement_text}. It does not explicitly state whether placement eligibility differs for international students. [1]"
+                return f"Yes. {placement_text}. [1]"
+            return self._build_fallback_response("missing placement evidence")
+
+        if any(term in lower_query for term in ["dedicated facilities", "facilities", "lab", "laboratory", "terminals", "robotics"]):
+            facilities_text = self._clean_kb_text(fields.get("infrastructure_and_facilities", ""))
+            if facilities_text:
+                return f"Computer science students have access to {facilities_text}. [1]"
+
+        if any(term in lower_query for term in ["entry requirement", "a-level", "a level", "ib requirement", "gcse", "english language requirement", "duolingo", "t-level", "btec"]):
+            entry_text = self._clean_kb_text(fields.get("entry_requirements_2026") or fields.get("entry_requirements", ""))
+            if entry_text:
+                if "duolingo" in lower_query and "duolingo" not in entry_text.lower():
+                    return self._build_fallback_response("missing duolingo evidence")
+                if "t-level" in lower_query and "t-level" not in entry_text.lower():
+                    return self._build_fallback_response("missing t-level evidence")
+                if "btec" in lower_query and "btec" not in entry_text.lower():
+                    return self._build_fallback_response("missing btec evidence")
+                return f"The source documentation states: {entry_text}. [1]"
+
+        if any(term in lower_query for term in ["student support", "support services", "support available"]):
+            support_text = self._clean_kb_text(fields.get("student_support", ""))
+            if support_text:
+                return f"Student support available includes {support_text}. [1]"
+
+        if any(term in lower_query for term in [
+            "how long", "duration", "ucas", "fee", "tuition", "placement", "entry", "a-level", "a level",
+            "ib", "gcse", "english language", "duolingo", "t-level", "btec", "facilities", "lab",
+            "salary", "employment", "career", "interview", "accredited", "bcs", "rank", "ranking",
+            "year 1", "year 2", "year 3", "module", "modules",
+        ]):
+            return self._build_fallback_response("missing source evidence")
+
+        return None
+
     def _build_polished_comparison_summary(self, docs, priorities: list | None = None) -> str | None:
         """Create a concise decision-style comparison summary from retrieved evidence."""
         if not docs:
@@ -1192,6 +1311,9 @@ Admissions Advisor Response:"""
             return self._build_fallback_response("no evidence")
 
         query_lower = user_query.lower()
+        kb_answer = self._synthesize_single_university_kb_answer(user_query, docs)
+        if kb_answer:
+            return kb_answer
         evidence_blocks = []
         for doc in docs:
             page_content = str(getattr(doc, "page_content", "") or "")
@@ -1203,8 +1325,9 @@ Admissions Advisor Response:"""
         if any(term in query_lower for term in ["ucas", "code"]):
             for doc in docs:
                 content = str(getattr(doc, "page_content", "") or "")
-                if "course code" in content.lower() or "cs303" in content.lower() or "cs505" in content.lower() or "cs606" in content.lower():
-                    return f"The available records point to the course code in the retrieved context: {content.split(':', 1)[-1].strip()} [1]"
+                explicit_code = re.search(r"(?:ucas code|course code)\s*:\s*([A-Z]{2,4}\d{2,4}[A-Z]?)", content, re.IGNORECASE)
+                if explicit_code:
+                    return f"The available records list the course code as {explicit_code.group(1)}. [1]"
             return self._build_fallback_response("missing code evidence")
 
         if any(term in query_lower for term in ["year 1", "year 2", "module", "modules", "curriculum"]):
@@ -1336,6 +1459,12 @@ Admissions Advisor Response:"""
         """Refine generic model output so it cites the retrieved evidence and preserves admissions-specific details."""
         if not answer or not docs:
             return answer or self._build_fallback_response("no evidence")
+        if re.search(
+            r"^(?:Year \d core modules include|The listed annual tuition fee|The source documentation states:|Computer science students have access to|Yes\.|The source confirms)",
+            str(answer).strip(),
+            re.IGNORECASE,
+        ):
+            return answer
 
         query_lower = user_query.lower()
         evidence_text = "\n".join(str(getattr(doc, "page_content", "") or "") for doc in docs)
@@ -1618,7 +1747,11 @@ Admissions Advisor Response:"""
                         return False
                     return True
 
-        if len(docs) < 2:
+        kb_single_doc = any(
+            ((getattr(doc, "metadata", {}) or {}).get("data_layer") == "knowledge_base_fallback")
+            for doc in docs
+        )
+        if len(docs) < 2 and not kb_single_doc:
             return True
 
         overlap = sum(1 for term in query_terms if term in evidence_text)
@@ -1643,13 +1776,17 @@ Admissions Advisor Response:"""
         evidence_text = " ".join([doc.page_content.lower() for doc in docs if getattr(doc, "page_content", None)])
         query_terms = {term for term in lower_query.replace("?", "").split() if len(term) > 3}
         overlap = sum(1 for term in query_terms if term in evidence_text)
+        kb_single_doc = any(
+            ((getattr(doc, "metadata", {}) or {}).get("data_layer") == "knowledge_base_fallback")
+            for doc in docs
+        )
 
         is_structured_query = any(term in lower_query for term in [
             "tuition", "fee", "duration", "salary", "standard duration", "statistical",
             "ranking", "rank", "tef", "nss", "satisfaction", "wellbeing", "bcs", "tariff",
         ])
         if is_structured_query:
-            score = max(score, 0.85)
+            score = max(score, 0.45 if kb_single_doc else 0.6)
 
         if overlap > 0:
             score += 0.1 * min(3, overlap)
@@ -1663,6 +1800,8 @@ Admissions Advisor Response:"""
             score += 0.1
         if any(term in lower_query for term in ["ucas", "code"]):
             score += 0.1
+        if kb_single_doc:
+            score += 0.15
 
         return round(min(1.0, score), 2)
 
@@ -2275,13 +2414,37 @@ Admissions Advisor Response:"""
             retrieval_query = f"{retrieval_query}\nBaseline university: {target_baseline}"
 
         allowed_institutions = [name for name in [target_baseline, target_competitor] if name]
+        single_institution_query = bool(target_competitor and not target_baseline and not priorities)
 
         # Step 1: Route Query Intent
         intent_layer = self.query_router.classify_intent(user_query)
         print(f"🛤️ Intent Router: Navigating query to [{intent_layer}] engine.")
 
         # Step 2: Fetch Data
-        if intent_layer == "SQL":
+        if single_institution_query:
+            print("📚 Targeted single-university query detected. Using curated knowledge-base retrieval first.")
+            retrieved_docs = self.knowledge_base_retriever.search(
+                user_query,
+                top_k=3,
+                target_competitor=target_competitor,
+                allowed_institutions=allowed_institutions,
+            )
+            if not retrieved_docs and intent_layer == "SQL":
+                retrieved_docs = self.query_router.execute_sql(
+                    user_query,
+                    target_competitor=target_competitor,
+                    target_programme=target_programme,
+                    target_baseline=target_baseline,
+                )
+            elif not retrieved_docs:
+                self._ensure_vector_store()
+                retrieved_docs = self.hybrid_retriever.search(
+                    retrieval_query,
+                    top_k=5,
+                    target_competitor=target_competitor,
+                    allowed_institutions=allowed_institutions,
+                )
+        elif intent_layer == "SQL":
             retrieved_docs = self.query_router.execute_sql(
                 user_query,
                 target_competitor=target_competitor,
@@ -2386,17 +2549,13 @@ Admissions Advisor Response:"""
                 }
                 
         formatted_context = self.format_docs(retrieved_docs)
+        kb_answer_seed = self._synthesize_single_university_kb_answer(user_query, retrieved_docs) if single_institution_query else None
 
         confidence_score = self._confidence_score(retrieved_docs, formatted_context, user_query)
         should_abstain = self._should_abstain(retrieved_docs, formatted_context, user_query)
         should_answer, reason = self._should_answer(confidence_score, retrieved_docs, formatted_context, user_query)
 
         structured_summary_seed = None
-        if intent_layer == "SQL" and self._is_structured_admissions_query(user_query):
-            should_abstain = False
-            should_answer = True
-            reason = ""
-
         if should_abstain or not should_answer:
             print("⚠️ Low-confidence retrieval detected. Returning abstention response.")
             self._log_low_confidence_event(user_query, confidence_score, reason or "low-confidence retrieval")
@@ -2407,11 +2566,17 @@ Admissions Advisor Response:"""
             engine_used = None
 
         if intent_layer == "SQL" and self._is_structured_admissions_query(user_query):
-            print("🧾 Structured admissions query detected. Using the structured summary formatter.")
+            print("🧾 Structured admissions query detected. Trying deterministic structured summarization.")
             structured_summary_seed = self._synthesize_answer(user_query, retrieved_docs)
-            response = structured_summary_seed
-            engine_used = "structured_summary"
-            should_abstain = False
+            if structured_summary_seed and not self._is_low_information_answer(structured_summary_seed):
+                response = structured_summary_seed
+                engine_used = "structured_summary"
+                should_abstain = False
+
+        if response is None and kb_answer_seed:
+            response = kb_answer_seed
+            engine_used = "knowledge_base_summary"
+            should_abstain = self._is_low_information_answer(kb_answer_seed)
 
         # Step 3: Gemini Generation Loop
         generation_errors = []

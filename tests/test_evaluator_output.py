@@ -17,6 +17,8 @@ class EvaluatorOutputTests(unittest.TestCase):
             with open(output_path, newline="", encoding="utf-8") as handle:
                 rows = list(csv.DictReader(handle))
             self.assertGreater(len(rows), 0)
+            self.assertIn("target_competitor", rows[0])
+            self.assertIn("evaluation_query", rows[0])
             self.assertIn("confidence_score", rows[0])
             self.assertIn("should_abstain", rows[0])
             self.assertIn("faithfulness", rows[0])
