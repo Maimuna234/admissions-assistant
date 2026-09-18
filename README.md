@@ -2,6 +2,8 @@
 
 A **Retrieval-Augmented Generation (RAG)** system for UK university admissions comparison, built as part of an MSc research project. The system enables students and admissions tutors to compare Computer Science undergraduate programmes across 11 UK universities using structured data, vector search, and large language model synthesis.
 
+GitHub repository: https://github.com/Maimuna234/admissions-assistant.git
+
 ---
 
 ## Project Overview
@@ -147,44 +149,121 @@ When priorities are selected, the system runs `_run_priority_comparison()` which
 
 ## Running the System
 
+The repository has two entry points:
+- The primary interface is the FastAPI app in `openwebui_api.py`, served with a browser UI at `/ui`.
+- The older Streamlit prototype is `app.py`; it is useful only for local testing and is not the main project interface.
+
 ### Prerequisites
 - Python 3.11+
-- A Google Gemini API key in `.env` as `GEMINI_API_KEY`
+- Git
+- A Google Gemini API key
+- A local terminal with PowerShell or Command Prompt on Windows
 
-### Install
-```bash
+### 1) Clone and open the project
+```powershell
+cd C:\path\to\admissions-assistant
+```
+
+### 2) Create a Python virtual environment
+```powershell
 python -m venv .venv
-.venv\Scripts\activate          # Windows
-pip install -r requirements.txt.txt
+.\.venv\Scripts\Activate.ps1
 ```
 
-### Start the API server
-```bash
-.venv\Scripts\python.exe -m uvicorn openwebui_api:app --host 127.0.0.1 --port 8000
+If PowerShell blocks activation, use:
+```powershell
+.\.venv\Scripts\activate.bat
 ```
 
-Or use the provided batch file:
-```bash
-run_interface.bat
+### 3) Install dependencies
+From the project root:
+```powershell
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
-Then open **http://127.0.0.1:8000/ui** in your browser.
+If you plan to run the legacy Streamlit prototype as well, install it separately:
+```powershell
+pip install streamlit
+```
 
-### Rebuild the vector index (if needed)
-```bash
+### 4) Add your Gemini API key
+Create a file named `.env` in the project root with:
+```env
+GEMINI_API_KEY=your_google_gemini_api_key_here
+```
+
+This is read automatically by the API layer when the app starts.
+
+### 5) Start the main application
+Run the backend server:
+```powershell
+python -m uvicorn openwebui_api:app --host 127.0.0.1 --port 8000
+```
+
+Then open this in your browser:
+```text
+http://127.0.0.1:8000/ui
+```
+
+You can also use the included Windows helper script:
+```powershell
+.\run_interface.bat
+```
+
+### 6) Run the legacy Streamlit prototype (optional)
+```powershell
+streamlit run app.py
+```
+
+This opens the older dashboard interface, but the project’s supported interface is the FastAPI `/ui` page above.
+
+### 7) Rebuild data if needed
+If the local indices or database are missing or stale, rebuild them:
+```powershell
+python seed_db.py
 python ingest.py
 python vector_indexer.py
 ```
 
-### Re-import the structured DB
-```bash
-python seed_db.py
-```
-
-### Run evaluations
-```bash
+### 8) Run evaluation scripts
+```powershell
 python evaluator.py
 ```
+
+### 9) Docker / OpenWebUI deployment (optional)
+```powershell
+docker compose -f docker-compose.openwebui.yml up
+```
+
+This starts the API and OpenWebUI stack. See `OPENWEBUI_DEPLOYMENT.md` for the full deployment guide.
+
+---
+
+## Troubleshooting
+
+- If Python complains about missing packages, re-run:
+  ```powershell
+  pip install -r requirements.txt
+  ```
+- If the app cannot access the model, check that `.env` exists and contains `GEMINI_API_KEY`.
+- If the UI loads but retrieval is empty, rebuild the data files:
+  ```powershell
+  python seed_db.py
+  python ingest.py
+  python vector_indexer.py
+  ```
+- If the backend does not start on port 8000, make sure no other process is already using that port and retry the command.
+
+---
+
+## Expected local workflow
+
+1. Create venv and install dependencies.
+2. Set your `.env` with `GEMINI_API_KEY`.
+3. Start the API with `uvicorn`.
+4. Open `http://127.0.0.1:8000/ui`.
+5. Query the system, or rebuild the DB/index if you have changed the data source.
 
 ---
 
